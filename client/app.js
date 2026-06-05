@@ -10,6 +10,12 @@ const statusText = document.getElementById("status-text");
 const dot = document.getElementById("dot");
 const themeBtn = document.getElementById("theme-toggle");
 const diagramBtn = document.getElementById("diagram-toggle");
+const filterBtn = document.getElementById("filter-toggle");
+const filterMenu = document.getElementById("filter-menu");
+const showThinking = document.getElementById("show-thinking");
+const showTools = document.getElementById("show-tools");
+const resumeBtn = document.getElementById("resume-btn");
+const resumeLabel = document.getElementById("resume-label");
 const toBottom = document.getElementById("to-bottom");
 const menuBtn = document.getElementById("menu");
 const sidebar = document.getElementById("sidebar");
@@ -90,6 +96,48 @@ diagramBtn.addEventListener("click", () => {
   paintDiagramBtn();
   conversation.querySelectorAll(".mermaid-block").forEach((c) => c.__mermaid && c.__mermaid.setGlobal(diagramsOn));
 });
+
+// ---------- filters (hide thinking / tool blocks) ----------
+function applyFilter(attr, key, hidden) {
+  if (hidden) root.setAttribute(attr, "1");
+  else root.removeAttribute(attr);
+  try { localStorage.setItem(key, hidden ? "1" : "0"); } catch (e) {}
+}
+function initFilters() {
+  showThinking.checked = root.getAttribute("data-hide-thinking") !== "1";
+  showTools.checked = root.getAttribute("data-hide-tools") !== "1";
+  showThinking.addEventListener("change", () =>
+    applyFilter("data-hide-thinking", "mirror-hide-thinking", !showThinking.checked));
+  showTools.addEventListener("change", () =>
+    applyFilter("data-hide-tools", "mirror-hide-tools", !showTools.checked));
+}
+function closeFilterMenu() {
+  filterMenu.hidden = true;
+  filterBtn.setAttribute("aria-expanded", "false");
+  filterBtn.classList.remove("filter-toggle-on");
+}
+filterBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const open = filterMenu.hidden;
+  filterMenu.hidden = !open;
+  filterBtn.setAttribute("aria-expanded", String(open));
+  filterBtn.classList.toggle("filter-toggle-on", open);
+});
+filterMenu.addEventListener("click", (e) => e.stopPropagation());
+document.addEventListener("click", () => { if (!filterMenu.hidden) closeFilterMenu(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !filterMenu.hidden) closeFilterMenu(); });
+
+// ---------- resume (copy `claude --resume <id>`) ----------
+resumeBtn.addEventListener("click", () => {
+  if (!currentId) return;
+  const cmd = "claude --resume " + currentId;
+  try {
+    navigator.clipboard.writeText(cmd).then(() => {
+      resumeLabel.textContent = "Copied";
+      setTimeout(() => { resumeLabel.textContent = "Resume"; }, 1300);
+    }, () => {});
+  } catch (e) {}
+});
 async function applyConfigTheme() {
   let stored = null;
   try { stored = localStorage.getItem("mirror-theme"); } catch (e) {}
@@ -158,6 +206,7 @@ function updateCurrentTitle() {
   } else {
     currentTitleEl.textContent = "Mirror";
   }
+  resumeBtn.hidden = !currentId;
 }
 
 function selectSession(id) {
@@ -591,6 +640,7 @@ function connect() {
 (async function init() {
   paintThemeIcon();
   paintDiagramBtn();
+  initFilters();
   await applyConfigTheme();
   await loadSessions();
   await loadConversation(true);

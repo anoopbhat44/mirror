@@ -119,9 +119,11 @@ snippets and jump-to-match, incremental append-only rendering (preserves expande
 grouping for tool-heavy turns; image rendering (pasted user images + screenshot/tool-result
 images); copy-code buttons + long-output show-more; mermaid diagram rendering (vendored, offline,
 lazy-loaded) with a top-bar Diagrams toggle plus a per-block Source/Diagram switch; a `/mirror`
-slash command that prints and opens the live-view link.
-**Remaining v2 polish (future PRs):** filters to hide thinking/tool blocks; `claude --resume`
-surfacing per session; optional PDF/Markdown export; accessibility pass.
+slash command that prints and opens the live-view link; a filter menu to hide thinking and/or
+tool-call blocks (persisted); a Resume button that copies `claude --resume <id>` for the viewed
+session. A "Try these" recipes section on the landing page shows how to trigger each feature.
+**Remaining v2 polish (future PRs):** optional PDF/Markdown export; accessibility pass;
+per-session (hover) resume in the sidebar; anchored headings.
 
 **Goal:** make the free local tool one you live in. Refine the reading experience, view every
 session instead of only the active one, search across them, and give the plugin real options.
@@ -139,8 +141,8 @@ anything is ever charged for (v3).
   inline; oversized images degrade to a placeholder rather than bloating the payload.
 - **Long output.** (done, PR #2) Tall code/result blocks clamp behind a "Show more" toggle; every
   code block has a hover Copy button. Mermaid diagrams render (toggleable). Anchored headings TODO.
-- **Find and filter.** In-page find across all messages including collapsed ones; toggles to hide
-  thinking or tool calls; a density switch.
+- **Find and filter.** (filters done, PR #2) A top-bar filter menu hides thinking and/or
+  tool-call blocks (persisted). Still TODO: in-page find across collapsed messages, a density switch.
 - **Polish.** Accessibility (focus, ARIA, reduced motion), keyboard nav, a long-session
   jump-to-turn / minimap. Optional local export of a session to PDF or Markdown.
 
@@ -163,8 +165,8 @@ anything is ever charged for (v3).
 ### d. Resume and view state
 - Remember the last session you were viewing, your scroll, and which disclosures were open
   (browser `localStorage`, no server state).
-- Surface the `claude --resume <id>` command or a button per session so you can jump back into the
-  actual agent. Mirror shows it; Claude Code runs it.
+- (done, PR #2) A Resume button in the top bar copies `claude --resume <id>` for the viewed
+  session; Mirror shows it, Claude Code runs it. Future: a per-session (hover) resume in the sidebar.
 
 ### e. Skill options (plugin config + commands)
 - A config file (`~/.mirror/config.*`): port, bind address, default theme, auto-open browser,

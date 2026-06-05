@@ -272,6 +272,25 @@ details[open] > summary::before { transform: rotate(45deg); }
 
 .diagram-toggle.on { color: var(--tool); border-color: color-mix(in oklch, var(--tool) 40%, var(--border-soft)); }
 
+/* ---------- filters + resume ---------- */
+.resume-btn { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 5px 11px 5px 9px; border: 1px solid var(--border-soft); border-radius: 8px; background: var(--bg-raised); color: var(--muted); font: 500 12.5px var(--sans); cursor: pointer; transition: color 0.15s ease, border-color 0.15s ease; }
+.resume-btn:hover { color: var(--text); border-color: var(--border); }
+.resume-btn svg { width: 15px; height: 15px; }
+.resume-btn[hidden] { display: none; }
+
+.filter-wrap { position: relative; display: flex; flex: none; }
+.filter-toggle-on { color: var(--tool); }
+.filter-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; min-width: 170px; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 11px; padding: 8px; box-shadow: 0 14px 34px -14px oklch(0.05 0.02 var(--hue) / 0.7); }
+.filter-menu[hidden] { display: none; }
+.filter-head { font: 600 10px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); padding: 4px 8px 6px; }
+.filter-row { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 7px; font-size: 13.5px; cursor: pointer; }
+.filter-row:hover { background: color-mix(in oklch, var(--panel) 55%, transparent); }
+.filter-row input { accent-color: var(--tool); width: 15px; height: 15px; cursor: pointer; }
+
+[data-hide-thinking="1"] details.thinking { display: none; }
+[data-hide-tools="1"] details.tool,
+[data-hide-tools="1"] .tool-group { display: none; }
+
 /* ---------- jump to latest ---------- */
 .to-bottom {
   position: fixed; right: 26px; bottom: 26px; z-index: 30; width: 42px; height: 42px; border-radius: 50%;

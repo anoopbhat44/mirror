@@ -11,6 +11,8 @@
       try {
         var t = localStorage.getItem("mirror-theme") || "dark";
         document.documentElement.setAttribute("data-theme", t);
+        if (localStorage.getItem("mirror-hide-thinking") === "1") document.documentElement.setAttribute("data-hide-thinking", "1");
+        if (localStorage.getItem("mirror-hide-tools") === "1") document.documentElement.setAttribute("data-hide-tools", "1");
       } catch (e) {
         document.documentElement.setAttribute("data-theme", "dark");
       }
@@ -39,8 +41,23 @@
       <header class="topbar">
         <button id="menu" class="icon-btn only-mobile" type="button" aria-label="Sessions" title="Sessions">&#9776;</button>
         <div class="current" id="current-title">Mirror</div>
+        <button id="resume-btn" class="resume-btn" type="button" hidden
+                title="Copy 'claude --resume <id>' (run it from the session's project directory)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 9 12 5 16"/><line x1="12" y1="16" x2="18" y2="16"/></svg>
+          <span id="resume-label">Resume</span>
+        </button>
         <div class="bar-right">
           <span class="status" id="status"><span class="dot" id="dot"></span><span id="status-text">connecting</span></span>
+          <div class="filter-wrap">
+            <button id="filter-toggle" class="icon-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Filters" title="Filter what's shown">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="10" cy="8" r="2.6" fill="var(--bg-raised)"/><circle cx="15" cy="16" r="2.6" fill="var(--bg-raised)"/></svg>
+            </button>
+            <div class="filter-menu" id="filter-menu" hidden role="menu">
+              <div class="filter-head">Show</div>
+              <label class="filter-row"><input type="checkbox" id="show-thinking" checked> Thinking</label>
+              <label class="filter-row"><input type="checkbox" id="show-tools" checked> Tool calls</label>
+            </div>
+          </div>
           <button id="diagram-toggle" class="icon-btn diagram-toggle" type="button" aria-label="Toggle diagrams" title="Render diagrams" aria-pressed="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/><path d="M9 6h4a2 2 0 0 1 2 2v7"/></svg>
           </button>

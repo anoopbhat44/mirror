@@ -13,7 +13,8 @@ clean, auto-updating document with a session switcher and full-text search.
 - **Search.** Full-text search across all your sessions (SQLite FTS5 under the hood,
   with a graceful fallback). Click a result to jump to the match.
 - **Readable tool-heavy turns.** Runs of tool calls collapse into a single group, code
-  blocks get a copy button, and long output folds behind "Show more".
+  blocks get a copy button, and long output folds behind "Show more". A filter menu hides
+  thinking or tool blocks, and a Resume button copies `claude --resume <id>` for any session.
 - **Diagrams and images.** Fenced `mermaid` blocks render as diagrams (toggle in the top
   bar, or per block); pasted images and screenshot tool results show inline.
 - **Zero dependencies.** Pure Python 3 standard library on the server. No `pip`, no `npm`.

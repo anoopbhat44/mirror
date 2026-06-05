@@ -109,8 +109,17 @@
     .dots { display: flex; justify-content: center; gap: 9px; margin-top: 20px; }
     .dots button { width: 8px; height: 8px; padding: 0; border-radius: 50%; border: none; background: var(--border); cursor: pointer; transition: background 0.16s ease, width 0.16s ease; }
     .dots button[aria-current="true"] { background: var(--accent); width: 22px; border-radius: 5px; }
+    /* try-these recipes */
+    .recipes { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .recipe { background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 14px; padding: 18px 20px; }
+    .recipe h3 { font-size: 15px; margin: 0 0 11px; font-weight: 620; }
+    .recipe .prompt { position: relative; background: oklch(0.13 0.012 var(--hue)); border: 1px solid var(--border-soft); border-radius: 10px; padding: 12px 50px 12px 14px; margin: 0; font: 13px/1.55 var(--mono); color: var(--text); white-space: pre-wrap; word-break: break-word; }
+    .recipe .prompt .copy { position: absolute; top: 8px; right: 8px; font: 11px var(--mono); color: var(--faint); background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 6px; padding: 3px 8px; cursor: pointer; transition: color 0.15s ease; }
+    .recipe .prompt .copy:hover { color: var(--text); }
+    .recipe .out { margin: 12px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+    .recipe .out::before { content: "\2192 "; color: var(--accent); }
     @media (prefers-reduced-motion: reduce) { .track { scroll-behavior: auto; } }
-    @media (max-width: 640px) { .feat { grid-template-columns: 1fr; } .cbtn { display: none; } }
+    @media (max-width: 640px) { .feat, .recipes { grid-template-columns: 1fr; } .cbtn { display: none; } }
   </style>
 </head>
 <body>
@@ -185,7 +194,7 @@ claude</pre>
         <div class="card"><span class="ic">&#128172;</span><h3>Watch the live session</h3><p>The conversation you are in appears on the right and updates after every turn, keeping your scroll position. A green dot marks it live.</p></div>
         <div class="card"><span class="ic">&#128194;</span><h3>Switch between sessions</h3><p>The left sidebar lists every Claude Code session, grouped by project and sorted by recency. Click any one to read it.</p></div>
         <div class="card"><span class="ic">&#128269;</span><h3>Search across everything</h3><p>Type in the search box to find any message across all your sessions. Click a result to jump to it with the match highlighted.</p></div>
-        <div class="card"><span class="ic">&#127769;</span><h3>Make it yours</h3><p>Toggle dark and light, and turn diagram rendering on or off, from the top bar. It remembers your choices. Run <code class="inline">/mirror</code> any time to reopen the link.</p></div>
+        <div class="card"><span class="ic">&#127769;</span><h3>Make it yours</h3><p>From the top bar: toggle dark and light, turn diagrams on or off, hide thinking or tool calls, and copy a Resume command for any session. It remembers your choices. Run <code class="inline">/mirror</code> to reopen the link.</p></div>
       </div>
     </section>
 
@@ -219,6 +228,37 @@ claude</pre>
         <button class="cbtn prev" id="mprev" type="button" aria-label="Previous example">&#8249;</button>
         <button class="cbtn next" id="mnext" type="button" aria-label="Next example">&#8250;</button>
         <div class="dots" id="mdots" role="tablist" aria-label="Choose example"></div>
+      </div>
+    </section>
+
+    <section id="try">
+      <p class="eyebrow">Try these</p>
+      <h2>Get a feel for it in five minutes.</h2>
+      <p class="lead">Open a session and give Claude one of these. Then watch it render in Mirror.</p>
+      <div class="recipes">
+        <div class="recipe">
+          <h3>Render a diagram</h3>
+          <pre class="prompt"><span class="ptext">Draw a mermaid diagram of how a request flows through this app.</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></pre>
+          <p class="out">Renders as a real diagram. Hit Source on it, or toggle Diagrams in the top bar.</p>
+        </div>
+        <div class="recipe">
+          <h3>Keep a busy turn readable</h3>
+          <pre class="prompt"><span class="ptext">Read every file in src/ and tell me what each one does.</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></pre>
+          <p class="out">The many tool calls collapse into one group you can expand.</p>
+        </div>
+        <div class="recipe">
+          <h3>Drop in a screenshot</h3>
+          <pre class="prompt"><span class="ptext">What looks wrong in this screenshot?</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></pre>
+          <p class="out">Paste or attach an image. It renders inline, and so do screenshots your tools take.</p>
+        </div>
+        <div class="recipe">
+          <h3>Fold a long output</h3>
+          <pre class="prompt"><span class="ptext">Print package.json in full and explain each dependency.</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></pre>
+          <p class="out">Long output folds behind Show more, with a Copy button on the block.</p>
+        </div>
+      </div>
+      <div class="callout" style="margin-top: 22px;">
+        <p>And in the browser: <b>search</b> the box to find anything across every session, click <b>Diagrams</b> in the top bar to toggle rendering, hide <b>thinking</b> or <b>tool calls</b> from the filter menu, and run <code class="inline">/mirror</code> any time to reopen the link.</p>
       </div>
     </section>
 
@@ -301,6 +341,21 @@ claude</pre>
       track.addEventListener("keydown", function (e) {
         if (e.key === "ArrowRight") { e.preventDefault(); go(Math.min(slides.length - 1, nearest() + 1)); }
         if (e.key === "ArrowLeft") { e.preventDefault(); go(Math.max(0, nearest() - 1)); }
+      });
+    })();
+
+    (function () {
+      document.querySelectorAll(".recipe .prompt .copy").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var t = btn.parentElement.querySelector(".ptext");
+          var s = t ? t.textContent : "";
+          try {
+            navigator.clipboard.writeText(s).then(function () {
+              btn.textContent = "Copied";
+              setTimeout(function () { btn.textContent = "Copy"; }, 1200);
+            }, function () {});
+          } catch (e) {}
+        });
       });
     })();
   </script>
