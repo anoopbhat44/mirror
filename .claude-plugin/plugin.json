@@ -1,8 +1,8 @@
 {
   "name": "mirror",
   "displayName": "Mirror",
-  "version": "0.1.0",
-  "description": "A live, styled HTML mirror of your Claude Code conversation. Prints a localhost link; renders the transcript your session already writes. No API cost, localhost only.",
+  "version": "0.2.0",
+  "description": "A live, searchable HTML workspace for your Claude Code conversations. Prints a localhost link; multi-session sidebar and full-text search over the transcripts your sessions already write. No API cost, localhost only.",
   "author": {
     "name": "Anoop Bhat"
   },

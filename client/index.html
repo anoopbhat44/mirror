@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mirror</title>
   <script>
-    // Set theme before paint to avoid a flash. Dark is the default.
+    // Set theme before paint to avoid a flash. Dark is the default; /api/config
+    // may set a different default later, but a stored choice always wins.
     (function () {
       try {
         var t = localStorage.getItem("mirror-theme") || "dark";
@@ -19,23 +20,36 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <span class="logo">&#129694;</span>
-      <span class="title">Mirror</span>
-    </div>
-    <div class="bar-right">
-      <span class="status" id="status">
-        <span class="dot" id="dot"></span>
-        <span id="status-text">connecting</span>
-      </span>
-      <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle theme" title="Toggle theme"></button>
-    </div>
-  </header>
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="side-head">
+        <span class="logo">&#129694;</span>
+        <span class="title">Mirror</span>
+      </div>
+      <div class="search">
+        <input id="search" type="search" placeholder="Search all sessions" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="session-list" id="session-list"></div>
+      <div class="side-foot" id="side-foot"></div>
+    </aside>
 
-  <main id="conversation" class="conversation">
-    <div class="empty" id="empty">Waiting for the conversation&hellip;</div>
-  </main>
+    <div class="sidebar-scrim" id="scrim"></div>
+
+    <div class="main">
+      <header class="topbar">
+        <button id="menu" class="icon-btn only-mobile" type="button" aria-label="Sessions" title="Sessions">&#9776;</button>
+        <div class="current" id="current-title">Mirror</div>
+        <div class="bar-right">
+          <span class="status" id="status"><span class="dot" id="dot"></span><span id="status-text">connecting</span></span>
+          <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle theme" title="Toggle theme"></button>
+        </div>
+      </header>
+
+      <main id="conversation" class="conversation">
+        <div class="empty" id="empty">Waiting for the conversation&hellip;</div>
+      </main>
+    </div>
+  </div>
 
   <button id="to-bottom" class="to-bottom" type="button" aria-label="Jump to latest" title="Jump to latest" hidden>&#8595;</button>
 

@@ -1,14 +1,17 @@
 """Mirror local server: serves the client and the parsed conversation, live.
 
 Stdlib only. Binds to 127.0.0.1 exclusively (the transcript can contain secrets,
-file contents, and tool output, so it never leaves the machine in v1).
+file contents, and tool output, so it never leaves the machine).
 
 Routes:
   GET /                 -> client/index.html
   GET /app.js /style.css /vendor/* -> static client assets (no path traversal)
   GET /healthz          -> "mirror-ok" (used by the hook to detect our server)
-  GET /api/conversation -> {"items": [...], "version": "<mtime>-<size>"}
-  GET /events           -> Server-Sent Events; emits on transcript change
+  GET /api/config       -> {"theme": ...}
+  GET /api/sessions     -> {"sessions": [...], "active": "<id>"}
+  GET /api/conversation[?session=<id>] -> {"items": [...], "version": "..."}
+  GET /api/search?q=... -> {"results": [...], "fts": bool}
+  GET /events           -> Server-Sent Events; emits on active-transcript change
 """
 
 import argparse
@@ -17,13 +20,19 @@ import os
 import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import state  # noqa: E402
+import config  # noqa: E402
+import index  # noqa: E402
 from parser import parse_transcript  # noqa: E402
 
 CLIENT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "client")
+PROJECTS_DIR = os.environ.get("MIRROR_PROJECTS_DIR") or os.path.expanduser("~/.claude/projects")
+INDEX_PATH = os.path.join(state.STATE_DIR, "index.db")
+LIVE_WINDOW = 120  # a session whose transcript changed within this many seconds is "live"
 
 STATIC_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -59,6 +68,11 @@ def _active_transcript():
     return active.get("transcript_path")
 
 
+def _active_session_id():
+    active = state.read_active()
+    return active.get("session_id") if active else None
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -78,16 +92,32 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        path = self.path.split("?", 1)[0]
+        parsed = urlparse(self.path)
+        path = parsed.path
+        query = parse_qs(parsed.query)
         if path == "/healthz":
             return self._send(200, state.HEALTH_TOKEN, "text/plain; charset=utf-8")
+        if path == "/api/config":
+            return self._serve_config()
+        if path == "/api/sessions":
+            return self._serve_sessions()
         if path == "/api/conversation":
-            return self._serve_conversation()
+            return self._serve_conversation(query.get("session", [None])[0])
+        if path == "/api/search":
+            return self._serve_search(query.get("q", [""])[0])
         if path == "/events":
             return self._serve_events()
         if path in ALLOWED_STATIC:
             return self._serve_static(ALLOWED_STATIC[path])
         return self._send(404, "not found", "text/plain; charset=utf-8")
+
+    def _json(self, payload):
+        self._send(
+            200,
+            json.dumps(payload),
+            "application/json; charset=utf-8",
+            {"Cache-Control": "no-store"},
+        )
 
     def _serve_static(self, rel):
         full = os.path.join(CLIENT_DIR, rel)
@@ -99,19 +129,57 @@ class Handler(BaseHTTPRequestHandler):
             body = fh.read()
         self._send(200, body, ctype)
 
-    def _serve_conversation(self):
-        transcript = _active_transcript()
+    def _open_index(self):
+        state.ensure_state_dir()
+        idx = index.Index(INDEX_PATH, PROJECTS_DIR)
+        idx.ingest()
+        return idx
+
+    def _serve_config(self):
+        cfg = config.load()
+        self._json({"theme": cfg.get("theme", "dark")})
+
+    def _resolve_transcript(self, session_id):
+        """Return the transcript path for a session id, or the active one if None."""
+        if not session_id:
+            return _active_transcript()
+        idx = self._open_index()
+        try:
+            row = idx.get_session(session_id)
+        finally:
+            idx.close()
+        return row["path"] if row else None
+
+    def _serve_conversation(self, session_id):
+        transcript = self._resolve_transcript(session_id)
         if not transcript or not os.path.isfile(transcript):
-            payload = {"items": [], "version": "none", "waiting": True}
-        else:
-            payload = parse_transcript(transcript)
-            payload["version"] = _transcript_version(transcript)
-        self._send(
-            200,
-            json.dumps(payload),
-            "application/json; charset=utf-8",
-            {"Cache-Control": "no-store"},
-        )
+            return self._json({"items": [], "version": "none", "waiting": True,
+                               "session": session_id})
+        payload = parse_transcript(transcript)
+        payload["version"] = _transcript_version(transcript)
+        payload["session"] = session_id or _active_session_id()
+        self._json(payload)
+
+    def _serve_sessions(self):
+        idx = self._open_index()
+        try:
+            sessions = idx.list_sessions()
+        finally:
+            idx.close()
+        now = time.time()
+        active = _active_session_id()
+        for s in sessions:
+            s["live"] = (now - (s.get("mtime") or 0)) < LIVE_WINDOW
+        self._json({"sessions": sessions, "active": active})
+
+    def _serve_search(self, query):
+        idx = self._open_index()
+        try:
+            results = idx.search(query)
+            fts = idx.fts
+        finally:
+            idx.close()
+        self._json({"results": results, "fts": fts, "query": query})
 
     def _serve_events(self):
         self.send_response(200)

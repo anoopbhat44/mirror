@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mirror, a live HTML view of your Claude Code conversation</title>
-  <meta name="description" content="Mirror renders your Claude Code conversation as a live, styled HTML page. No API cost, localhost only, zero dependencies.">
+  <title>Mirror, a live HTML view of your Claude Code conversations</title>
+  <meta name="description" content="Mirror is a Claude Code plugin that shows your conversations as a live, searchable HTML workspace. No API cost, localhost only, zero dependencies.">
   <meta property="og:title" content="Mirror">
-  <meta property="og:description" content="A live, styled HTML view of your Claude Code conversation. No API cost, localhost only.">
+  <meta property="og:description" content="A live, searchable HTML workspace for your Claude Code sessions. No API cost, localhost only.">
   <style>
     :root {
       --hue: 265;
@@ -18,210 +18,197 @@
       --text: oklch(0.94 0.008 var(--hue));
       --muted: oklch(0.72 0.02 var(--hue));
       --faint: oklch(0.6 0.02 var(--hue));
-      --accent: oklch(0.7 0.13 290);
-      --blue: oklch(0.66 0.14 255);
-      --green: oklch(0.76 0.12 155);
+      --accent: oklch(0.72 0.13 290);
+      --blue: oklch(0.68 0.14 255);
+      --green: oklch(0.78 0.13 155);
       --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body {
-      margin: 0; background: var(--bg); color: var(--text);
-      font: 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased;
-    }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased; }
     a { color: var(--blue); text-decoration: none; }
-    .wrap { max-width: 940px; margin: 0 auto; padding: 0 24px; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
 
-    /* ambient glow behind hero, purposeful not decorative-everywhere */
-    .hero {
-      position: relative; text-align: center;
-      padding: 104px 24px 64px; overflow: hidden;
-    }
-    .hero::before {
-      content: ""; position: absolute; inset: -40% 0 auto 0; height: 460px;
-      background: radial-gradient(60% 70% at 50% 0%,
-        color-mix(in oklch, var(--accent) 22%, transparent), transparent 70%);
-      pointer-events: none; z-index: 0;
-    }
+    .hero { position: relative; text-align: center; padding: 96px 24px 52px; overflow: hidden; }
+    .hero::before { content: ""; position: absolute; inset: -40% 0 auto 0; height: 440px; background: radial-gradient(58% 70% at 50% 0%, color-mix(in oklch, var(--accent) 22%, transparent), transparent 70%); z-index: 0; }
     .hero > * { position: relative; z-index: 1; }
-    .logo { font-size: 60px; line-height: 1; filter: drop-shadow(0 6px 24px color-mix(in oklch, var(--accent) 40%, transparent)); }
-    h1 { font-size: clamp(40px, 7vw, 60px); margin: 14px 0 10px; letter-spacing: -0.025em; font-weight: 680; }
-    .tagline { font-size: clamp(17px, 2.4vw, 21px); color: var(--muted); margin: 0 auto 30px; max-width: 600px; }
-
+    .logo { font-size: 58px; line-height: 1; filter: drop-shadow(0 6px 22px color-mix(in oklch, var(--accent) 42%, transparent)); }
+    h1 { font-size: clamp(40px, 7vw, 58px); margin: 14px 0 10px; letter-spacing: -0.025em; font-weight: 680; }
+    .tagline { font-size: clamp(17px, 2.4vw, 21px); color: var(--muted); margin: 0 auto 18px; max-width: 640px; }
+    .sub { color: var(--faint); font-size: 15px; margin: 0 auto 28px; max-width: 560px; }
     .cta { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 22px; border-radius: 11px; font-weight: 600; font-size: 15px;
-      transition: transform 0.18s cubic-bezier(0.22,1,0.36,1), background 0.18s ease, border-color 0.18s ease;
-    }
-    .btn:hover { transform: translateY(-2px); }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 11px; font-weight: 600; font-size: 15px; transition: transform 0.18s cubic-bezier(0.22,1,0.36,1), background 0.18s ease, border-color 0.18s ease; }
+    .btn:hover { transform: translateY(-2px); text-decoration: none; }
     .btn.primary { background: var(--text); color: var(--bg); }
     .btn.primary:hover { background: #fff; }
     .btn.ghost { border: 1px solid var(--border); color: var(--text); }
     .btn.ghost:hover { border-color: var(--faint); background: var(--bg-2); }
-
-    .pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
-    .pill {
-      font-size: 12.5px; color: var(--muted); font-weight: 500;
-      border: 1px solid var(--border-soft); border-radius: 999px;
-      padding: 6px 14px; background: color-mix(in oklch, var(--bg-2) 60%, transparent);
-    }
+    .pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 28px; }
+    .pill { font-size: 12.5px; color: var(--muted); font-weight: 500; border: 1px solid var(--border-soft); border-radius: 999px; padding: 6px 14px; background: color-mix(in oklch, var(--bg-2) 60%, transparent); }
     .pill b { color: var(--green); font-weight: 600; }
 
-    /* product preview frame */
-    .preview {
-      margin: 56px auto 0; max-width: 880px;
-      border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
-      background: var(--bg-2);
-      box-shadow: 0 30px 80px -40px oklch(0.05 0.02 var(--hue)), 0 0 0 1px color-mix(in oklch, var(--accent) 8%, transparent);
-    }
-    .preview .chrome {
-      display: flex; align-items: center; gap: 7px;
-      padding: 11px 14px; border-bottom: 1px solid var(--border-soft);
-      background: var(--bg);
-    }
+    .preview { margin: 52px auto 0; max-width: 900px; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--bg-2); box-shadow: 0 30px 80px -40px oklch(0.05 0.02 var(--hue)), 0 0 0 1px color-mix(in oklch, var(--accent) 8%, transparent); }
+    .preview .chrome { display: flex; align-items: center; gap: 7px; padding: 11px 14px; border-bottom: 1px solid var(--border-soft); background: var(--bg); }
     .preview .chrome i { width: 11px; height: 11px; border-radius: 50%; background: var(--border); display: inline-block; }
-    .preview .chrome .addr {
-      margin-left: 10px; font: 12px var(--mono); color: var(--faint);
-    }
+    .preview .chrome .addr { margin-left: 10px; font: 12px var(--mono); color: var(--faint); }
     .preview img { display: block; width: 100%; height: auto; }
 
-    section { padding: 64px 0; }
+    section { padding: 60px 0; border-top: 1px solid var(--border-soft); }
     .eyebrow { font: 600 12px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0 0 10px; }
-    h2 { font-size: clamp(26px, 4vw, 34px); margin: 0 0 36px; letter-spacing: -0.02em; font-weight: 660; }
+    h2 { font-size: clamp(26px, 4vw, 33px); margin: 0 0 14px; letter-spacing: -0.02em; font-weight: 660; }
+    h3 { font-size: 18px; margin: 0 0 6px; font-weight: 620; }
+    p.lead { color: var(--muted); max-width: 70ch; margin: 0 0 28px; }
 
-    /* "why" as an editorial list, not an identical card grid */
-    .feat { display: grid; grid-template-columns: auto 1fr; gap: 18px 22px; align-items: baseline; }
-    .feat .row { display: contents; }
-    .feat .n { font: 600 14px var(--mono); color: var(--faint); padding-top: 4px; }
-    .feat .body { padding-bottom: 26px; border-bottom: 1px solid var(--border-soft); }
-    .feat .row:last-child .body { border-bottom: none; padding-bottom: 0; }
-    .feat h3 { margin: 0 0 5px; font-size: 19px; font-weight: 620; }
-    .feat p { margin: 0; color: var(--muted); max-width: 62ch; }
+    .callout { background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 14px; padding: 20px 22px; margin: 0 0 22px; }
+    .callout p { margin: 0; color: var(--muted); }
+    .callout b { color: var(--text); }
 
-    .install pre {
-      background: oklch(0.13 0.012 var(--hue)); border: 1px solid var(--border-soft);
-      border-radius: 12px; padding: 18px 20px; overflow-x: auto;
-      font: 13.5px/1.7 var(--mono); color: var(--text); margin: 0 0 14px;
-    }
-    .install .c { color: var(--green); }
-    .install .muted { color: var(--faint); }
-    .install p { color: var(--muted); margin: 22px 0 12px; }
+    pre { background: oklch(0.13 0.012 var(--hue)); border: 1px solid var(--border-soft); border-radius: 12px; padding: 16px 18px; overflow-x: auto; font: 13.5px/1.7 var(--mono); color: var(--text); margin: 0 0 14px; }
+    .c { color: var(--green); } .cm { color: var(--faint); }
+    code.inline { font: 13px var(--mono); background: var(--bg-2); color: var(--green); border: 1px solid var(--border-soft); border-radius: 6px; padding: 2px 7px; }
 
-    .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 22px; }
-    .steps li { position: relative; padding-left: 50px; }
-    .steps li::before {
-      counter-increment: s; content: counter(s);
-      position: absolute; left: 0; top: -3px; width: 34px; height: 34px;
-      border: 1px solid var(--border); border-radius: 50%;
-      display: grid; place-items: center; font: 600 15px var(--mono); color: var(--accent);
-      background: var(--bg-2);
-    }
+    .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 26px; }
+    .steps > li { position: relative; padding-left: 52px; }
+    .steps > li::before { counter-increment: s; content: counter(s); position: absolute; left: 0; top: -4px; width: 36px; height: 36px; border: 1px solid var(--border); border-radius: 50%; display: grid; place-items: center; font: 600 16px var(--mono); color: var(--accent); background: var(--bg-2); }
     .steps b { font-weight: 620; }
-    .steps code {
-      font: 13px var(--mono); background: var(--bg-2); color: var(--green);
-      border: 1px solid var(--border-soft); border-radius: 6px; padding: 2px 7px;
-    }
-    .steps p { margin: 5px 0 0; color: var(--muted); }
+    .steps p { margin: 6px 0 10px; color: var(--muted); }
 
-    footer {
-      text-align: center; color: var(--faint); font-size: 14px;
-      padding: 56px 24px; border-top: 1px solid var(--border-soft); margin-top: 40px;
-    }
+    .feat { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .card { background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 14px; padding: 20px 22px; }
+    .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+    .card .ic { font-size: 20px; margin-bottom: 10px; display: block; }
+
+    .faq details { border-bottom: 1px solid var(--border-soft); padding: 14px 0; }
+    .faq summary { cursor: pointer; font-weight: 600; list-style: none; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::before { content: "+ "; color: var(--accent); font-family: var(--mono); }
+    .faq details[open] summary::before { content: "- "; }
+    .faq p { color: var(--muted); margin: 10px 0 0; max-width: 70ch; }
+
+    footer { text-align: center; color: var(--faint); font-size: 14px; padding: 54px 24px; border-top: 1px solid var(--border-soft); }
     footer a { color: var(--muted); }
-    @media (max-width: 600px) {
-      .feat { grid-template-columns: 1fr; gap: 0; }
-      .feat .n { display: none; }
-    }
+    @media (max-width: 640px) { .feat { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <header class="hero">
     <div class="logo">&#129694;</div>
     <h1>Mirror</h1>
-    <p class="tagline">A live, styled HTML view of your Claude Code conversation. Keep working in the terminal. Mirror gives you a link that updates every turn.</p>
+    <p class="tagline">A live, searchable HTML workspace for your Claude Code conversations.</p>
+    <p class="sub">Keep working in the terminal. Mirror prints a link, and that page shows every session as a clean document that updates as you go.</p>
     <div class="cta">
-      <a class="btn primary" href="https://github.com/anoopbhat44/mirror">View on GitHub</a>
-      <a class="btn ghost" href="#install">Install it</a>
+      <a class="btn primary" href="#install">Get started</a>
+      <a class="btn ghost" href="https://github.com/anoopbhat44/mirror">View on GitHub</a>
     </div>
     <div class="pills">
       <span class="pill"><b>&#36;0</b> &nbsp;no API cost</span>
       <span class="pill">localhost only</span>
       <span class="pill">zero dependencies</span>
+      <span class="pill">macOS &amp; Linux</span>
       <span class="pill">MIT licensed</span>
     </div>
-
     <div class="preview">
-      <div class="chrome">
-        <i></i><i></i><i></i>
-        <span class="addr">localhost:7842</span>
-      </div>
-      <img src="screenshot.png" alt="The Mirror live view rendering a Claude Code conversation, with user messages, assistant replies, and collapsible tool calls.">
+      <div class="chrome"><i></i><i></i><i></i><span class="addr">localhost:7842</span></div>
+      <img src="screenshot.png" alt="The Mirror workspace: a session list on the left and a rendered Claude Code conversation on the right.">
     </div>
   </header>
 
   <main class="wrap">
     <section>
-      <p class="eyebrow">Why it exists</p>
-      <h2>Read your session, do not scroll it.</h2>
-      <div class="feat">
-        <div class="row">
-          <div class="n">01</div>
-          <div class="body">
-            <h3>It costs nothing to run</h3>
-            <p>Mirror never calls a model. It renders the transcript your session already writes to disk, so it rides on the subscription you already pay for. No keys, no metering.</p>
-          </div>
-        </div>
-        <div class="row">
-          <div class="n">02</div>
-          <div class="body">
-            <h3>It never leaves your machine</h3>
-            <p>The server listens on 127.0.0.1 only. Your transcript, with its secrets, file contents, and tool output, stays on localhost. Nothing is uploaded.</p>
-          </div>
-        </div>
-        <div class="row">
-          <div class="n">03</div>
-          <div class="body">
-            <h3>It updates as you work</h3>
-            <p>The page refreshes after every turn over Server-Sent Events and keeps your scroll position, so a long session stays readable instead of vanishing up the terminal.</p>
-          </div>
-        </div>
-        <div class="row">
-          <div class="n">04</div>
-          <div class="body">
-            <h3>It is almost nothing</h3>
-            <p>Pure Python standard library on the server. No pip, no npm, no build step. Clone it, point Claude Code at it, done.</p>
-          </div>
-        </div>
+      <p class="eyebrow">What it is</p>
+      <h2>Your terminal sessions, as a readable workspace.</h2>
+      <p class="lead">Claude Code runs in your terminal, where long conversations scroll away fast. Mirror is a plugin that mirrors those conversations into a browser tab: rendered markdown, syntax-highlighted code, collapsible tool calls, a list of all your sessions, and full-text search across them. It reads the transcript files Claude Code already writes, so it never calls a model and never costs a token.</p>
+      <div class="callout">
+        <p><b>New to Claude Code?</b> It is Anthropic's coding agent that runs in your terminal. Install it first (it needs <a href="https://nodejs.org">Node.js</a>):</p>
+      </div>
+      <pre><span class="cm"># install Claude Code, then sign in when it launches</span>
+npm install -g @anthropic-ai/claude-code
+claude</pre>
+      <p class="lead">Full instructions: <a href="https://docs.claude.com/en/docs/claude-code">docs.claude.com/en/docs/claude-code</a>. Once <code class="inline">claude</code> works in your terminal, add Mirror below.</p>
+    </section>
+
+    <section id="install">
+      <p class="eyebrow">Install Mirror</p>
+      <h2>Three steps to a live link.</h2>
+      <ol class="steps">
+        <li>
+          <b>Clone the plugin.</b>
+          <p>Put it anywhere on your machine.</p>
+          <pre><span class="c">git</span> clone https://github.com/anoopbhat44/mirror.git</pre>
+        </li>
+        <li>
+          <b>Start Claude Code with the plugin loaded.</b>
+          <p>Point Claude Code at the folder you just cloned. Run this from any project you want to work in.</p>
+          <pre><span class="c">claude</span> --plugin-dir /path/to/mirror</pre>
+          <p>Prefer a permanent install? Add it through a local marketplace instead:</p>
+          <pre><span class="c">claude</span> plugin marketplace add /path/to/mirror
+<span class="c">claude</span> plugin install mirror</pre>
+        </li>
+        <li>
+          <b>Open the link Mirror prints.</b>
+          <p>On startup you will see a line like this. Open it in your browser.</p>
+          <pre>&#129694; Mirror live view: http://localhost:7842</pre>
+        </li>
+      </ol>
+      <div class="callout">
+        <p>Requirements: <b>Python 3.8+</b> (already on macOS and most Linux) and Claude Code. There is nothing to <code class="inline" style="color:var(--text)">pip install</code> or build. If you edit plugin files during development, run <code class="inline" style="color:var(--text)">/reload-plugins</code> inside Claude Code.</p>
       </div>
     </section>
 
-    <section class="install" id="install">
-      <p class="eyebrow">Install</p>
-      <h2>Two lines to a live link.</h2>
-      <pre><span class="muted"># clone, then point Claude Code at it</span>
-<span class="c">git</span> clone https://github.com/anoopbhat44/mirror.git
-<span class="c">claude</span> --plugin-dir /path/to/mirror</pre>
-      <p>Or install it permanently through a local marketplace:</p>
-      <pre><span class="c">claude</span> plugin marketplace add /path/to/mirror
-<span class="c">claude</span> plugin install mirror</pre>
+    <section>
+      <p class="eyebrow">How to use it</p>
+      <h2>Read, switch, search.</h2>
+      <div class="feat">
+        <div class="card"><span class="ic">&#128172;</span><h3>Watch the live session</h3><p>The conversation you are in appears on the right and updates after every turn, keeping your scroll position. A green dot marks it live.</p></div>
+        <div class="card"><span class="ic">&#128194;</span><h3>Switch between sessions</h3><p>The left sidebar lists every Claude Code session, grouped by project and sorted by recency. Click any one to read it.</p></div>
+        <div class="card"><span class="ic">&#128269;</span><h3>Search across everything</h3><p>Type in the search box to find any message across all your sessions. Click a result to jump to it with the match highlighted.</p></div>
+        <div class="card"><span class="ic">&#127769;</span><h3>Make it yours</h3><p>Toggle dark and light with the button in the top bar. It remembers your choice.</p></div>
+      </div>
+      <div class="preview" style="margin-top:32px;">
+        <div class="chrome"><i></i><i></i><i></i><span class="addr">localhost:7842 &middot; search</span></div>
+        <img src="search.png" alt="Searching across all sessions in Mirror, with matches highlighted in the results.">
+      </div>
     </section>
 
     <section>
-      <p class="eyebrow">Use it</p>
-      <h2>There is no step four.</h2>
-      <ol class="steps">
-        <li><b>Start Claude Code</b> the way you always do.<p>Mirror's hooks start a tiny local server in the background.</p></li>
-        <li><b>Open the link it prints.</b><p>You will see <code>&#129694; Mirror live view: http://localhost:7842</code></p></li>
-        <li><b>Watch it render.</b><p>The conversation appears and updates after every turn.</p></li>
-      </ol>
+      <p class="eyebrow">Features</p>
+      <h2>What you get.</h2>
+      <div class="feat">
+        <div class="card"><h3>No API cost</h3><p>Mirror never calls a model. It renders the transcript your session already writes, so it rides on the Claude subscription you have.</p></div>
+        <div class="card"><h3>Localhost only</h3><p>The server binds to 127.0.0.1. Your transcripts, with their secrets and file contents, never leave your machine.</p></div>
+        <div class="card"><h3>Multi-session workspace</h3><p>Every session in one place, grouped by project, with live indicators and message counts.</p></div>
+        <div class="card"><h3>Full-text search</h3><p>Fast search across your whole history, powered by SQLite under the hood. No setup.</p></div>
+        <div class="card"><h3>Real rendering</h3><p>Markdown, highlighted code, tables, and collapsible tool calls and thinking. Wide content uses the space.</p></div>
+        <div class="card"><h3>Zero dependencies</h3><p>Pure Python standard library on the server. Nothing to install, nothing to build.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <p class="eyebrow">Options</p>
+      <h2>Configure it (optional).</h2>
+      <p class="lead">Mirror works with no config. To change defaults, create <code class="inline">~/.mirror/config.json</code>:</p>
+      <pre>{
+  <span class="c">"theme"</span>: "dark",      <span class="cm">// "dark" or "light"</span>
+  <span class="c">"port"</span>: 7842,        <span class="cm">// preferred port (falls back if busy)</span>
+  <span class="c">"auto_open"</span>: false    <span class="cm">// open the browser when the server starts</span>
+}</pre>
+    </section>
+
+    <section class="faq">
+      <p class="eyebrow">FAQ</p>
+      <h2>Questions.</h2>
+      <details><summary>Does it cost anything or use my tokens?</summary><p>No. Mirror reads the transcript files Claude Code writes to disk. It never makes a model call, so it adds nothing to your bill.</p></details>
+      <details><summary>Is my data private?</summary><p>Everything stays local. The server only listens on 127.0.0.1, so the page is reachable only from your own machine. Mirror does not upload anything.</p></details>
+      <details><summary>Which operating systems work?</summary><p>macOS and Linux. You need Python 3.8 or newer, which is already present on most systems.</p></details>
+      <details><summary>Do I have to keep a terminal open?</summary><p>Mirror starts a small background server automatically when Claude Code launches. Just open the printed link.</p></details>
+      <details><summary>How do I stop it?</summary><p>Run <code class="inline" style="color:var(--text)">kill $(cat ~/.mirror/server.pid)</code>. It starts again next time you launch Claude Code.</p></details>
     </section>
   </main>
 
   <footer>
-    Open source under the MIT license.
-    <a href="https://github.com/anoopbhat44/mirror">github.com/anoopbhat44/mirror</a>
+    Open source under the MIT license. &nbsp;<a href="https://github.com/anoopbhat44/mirror">github.com/anoopbhat44/mirror</a>
   </footer>
 </body>
 </html>
