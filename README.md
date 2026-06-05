@@ -35,23 +35,18 @@ clean, auto-updating document with a session switcher and full-text search.
 
 ## Install
 
-Clone the repo:
+Install from the marketplace (recommended):
 
 ```bash
-git clone https://github.com/anoopbhat44/mirror.git
+claude plugin marketplace add anona-labs/mirror
+claude plugin install mirror@anona-labs
 ```
 
-Then load it as a plugin. For local use, point Claude Code at the directory:
+Or run it from a local clone, for development:
 
 ```bash
+git clone https://github.com/anona-labs/mirror.git
 claude --plugin-dir /path/to/mirror
-```
-
-To install it permanently via a local marketplace:
-
-```bash
-claude plugin marketplace add /path/to/mirror
-claude plugin install mirror
 ```
 
 After editing plugin files during development, run `/reload-plugins` inside Claude Code.
@@ -69,6 +64,17 @@ After editing plugin files during development, run `/reload-plugins` inside Clau
 5. Run `/mirror` any time to reprint the link and open it in your browser.
 
 That is the whole thing. Nothing else to run.
+
+## Commands
+
+Mirror ships one slash command:
+
+- **`/mirror`** reprints the live-view link and opens it in your browser. It reuses the
+  running server, or restarts it if needed. It takes no arguments, and only you can run it
+  (Claude never triggers it automatically).
+
+More commands (list and switch sessions, show status, stop the server) are planned; see
+[ROADMAP.md](ROADMAP.md).
 
 ## Configuration (optional)
 

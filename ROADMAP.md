@@ -1,6 +1,6 @@
 # Mirror - Roadmap
 
-Repo: https://github.com/anoopbhat44/mirror (public, MIT)
+Repo: https://github.com/anona-labs/mirror (public, MIT)
 
 A live, nicely-styled HTML mirror of your coding-agent session. You keep chatting in the
 terminal; Mirror prints a link, and that link shows the conversation as an evolving, readable

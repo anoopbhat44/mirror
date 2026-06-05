@@ -6,8 +6,8 @@
   "author": {
     "name": "Anoop Bhat"
   },
-  "homepage": "https://github.com/anoopbhat44/mirror",
-  "repository": "https://github.com/anoopbhat44/mirror",
+  "homepage": "https://github.com/anona-labs/mirror",
+  "repository": "https://github.com/anona-labs/mirror",
   "license": "MIT",
   "keywords": ["transcript", "viewer", "html", "live", "hooks"],
   "hooks": {
