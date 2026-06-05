@@ -1,0 +1,13 @@
+{
+  "name": "anona-labs",
+  "owner": {
+    "name": "Anoop Bhat"
+  },
+  "plugins": [
+    {
+      "name": "mirror",
+      "source": "./",
+      "description": "A live, searchable HTML workspace for your Claude Code conversations. No API cost, localhost only."
+    }
+  ]
+}
