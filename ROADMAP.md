@@ -16,7 +16,11 @@ that searches into collapsed thinking and tool blocks), per-session Resume in th
 export of a session, a SessionStart nudge so Claude emits ```mermaid fences instead of ASCII art,
 and a live-view robustness fix: the default view now follows the most recently modified transcript
 instead of a possibly-stale `active.json` pointer, so it updates as the conversation proceeds even
-when a hook misses. Remaining polish and the SQLite decision are below.
+when a hook misses. A follow-up batch (plugin v0.5.0, ideas drawn from
+[tenure](https://github.com/tenurehq/tenure)) made cross-session search relevance-ranked (FTS5
+bm25, not recency), added an optional "this project only" scope filter, and added an Insights view
+(totals, busiest projects, and a per-session breakdown of turns, tool calls by name, and thinking),
+all from the derived index with no API cost. Remaining polish and the SQLite decision are below.
 
 ---
 
@@ -179,6 +183,18 @@ anything is ever charged for (v3).
 - **In-session find** (done): client-side, instant Cmd/Ctrl-F that reaches into collapsed blocks.
 - **Cross-session search** (done, PR #1): the "did we solve this before" feature. This is what
   motivates the SQLite / FTS5 decision in the next section.
+- **Relevance ranking and scoping** (done, v0.5.0): search now orders by FTS5 `bm25()` relevance
+  (recency only breaks ties), and an optional toggle scopes results to the current session's
+  project, a hard filter inspired by Tenure's scoped beliefs. The LIKE fallback keeps recency
+  order since it has no relevance signal.
+
+### f. Insights (done, v0.5.0)
+- An Insights view over the derived index: totals (sessions, messages, projects), the busiest
+  projects by message volume, and a per-session breakdown (your turns, replies, tool calls grouped
+  by name, thinking blocks) computed client-side from the already-rendered items. No API cost and
+  no extra server parse. Inspired by Tenure's coverage dashboard, reframed for a read-only viewer.
+  The proxy / belief-injection half of Tenure stays out of scope: it requires sitting in the
+  request path and calling a model, which breaks principles 1 and 6.
 
 ### d. Resume and view state
 - Remember the last session you were viewing, your scroll, and which disclosures were open
@@ -332,7 +348,7 @@ Still grounded in real demand, but bigger bets. Each needs validation, not faith
 | Version | Theme | Status | Cost to user | Open / paid |
 |---|---|---|---|---|
 | v1 | Local live view | Shipped | Free | Open source |
-| v2 | Local workspace: multi-session, search, incremental render, config | Merged (PR #1, #2, #3) | Free | Open source |
+| v2 | Local workspace: multi-session, search, incremental render, config | Merged (PR #1, #2, #3) + v0.5.0 (relevance search, scope, insights) | Free | Open source |
 | v3 | Artifacts + public sharing | Planned | Free local, paid hosting | Open core |
 | v4 | Team, analytics, collaboration, interactive control | Vision | Paid (enterprise) | Open core + hosted |
 

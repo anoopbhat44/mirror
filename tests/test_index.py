@@ -94,6 +94,48 @@ class TestIndex(unittest.TestCase):
         alpha = [r for r in results if r["session_id"] == "sess-alpha"]
         self.assertEqual(len(alpha), 1)
 
+    def test_search_ranks_by_relevance_not_recency(self):
+        # Two sessions both match "kubernetes". The OLDER one mentions it many
+        # times (stronger BM25); the NEWER one mentions it once. Relevance, not
+        # recency, must decide the order.
+        if not self.idx.fts:
+            self.skipTest("FTS5 unavailable; relevance ranking needs bm25()")
+        strong = write_session(self.projects, "-Users-kumar-strong", "sess-strong", [
+            u("kubernetes kubernetes kubernetes operator pattern"),
+            a("k1", "Use the kubernetes operator with kubernetes CRDs in kubernetes."),
+        ])
+        weak = write_session(self.projects, "-Users-kumar-weak", "sess-weak", [
+            u("A passing note that mentions kubernetes once."),
+            a("k2", "Mostly unrelated text about general deployment."),
+        ])
+        os.utime(strong, (1000, 1000))                       # older
+        os.utime(weak, (9_000_000_000, 9_000_000_000))       # newer
+        self.idx.ingest()
+        results = self.idx.search("kubernetes")
+        ids = [r["session_id"] for r in results]
+        self.assertIn("sess-strong", ids)
+        self.assertIn("sess-weak", ids)
+        self.assertEqual(ids[0], "sess-strong")
+
+    def test_search_scoped_to_project(self):
+        self.idx.ingest()
+        only_beta = self.idx.search("FTS5", project="beta")
+        self.assertTrue(only_beta)
+        self.assertTrue(all(r["project"] == "beta" for r in only_beta))
+        none_in_alpha = self.idx.search("FTS5", project="alpha")
+        self.assertEqual(none_in_alpha, [])
+
+    def test_stats_totals_and_per_project(self):
+        self.idx.ingest()
+        st = self.idx.stats()
+        self.assertEqual(st["total_sessions"], 2)
+        self.assertEqual(st["total_messages"], 4)
+        by = {p["project"]: p for p in st["projects"]}
+        self.assertEqual(by["alpha"]["sessions"], 1)
+        self.assertEqual(by["alpha"]["messages"], 2)
+        self.assertEqual(by["beta"]["sessions"], 1)
+        self.assertEqual(by["beta"]["messages"], 2)
+
     def test_rebuild_from_scratch(self):
         self.idx.ingest()
         self.idx.close()

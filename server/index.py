@@ -215,42 +215,79 @@ class Index:
         ).fetchall()
         return [dict(r) for r in rows]
 
-    def search(self, query, limit=60):
+    def stats(self):
+        """Cheap aggregate counts from the index: totals plus a per-project
+        breakdown. Read-only over the sessions table, no transcript re-parse."""
+        rows = self.conn.execute(
+            """SELECT project, COUNT(*) AS sessions, COALESCE(SUM(msg_count), 0) AS messages
+               FROM sessions GROUP BY project ORDER BY messages DESC, project ASC"""
+        ).fetchall()
+        projects = [
+            {"project": r["project"], "sessions": r["sessions"], "messages": r["messages"]}
+            for r in rows
+        ]
+        span = self.conn.execute(
+            "SELECT MIN(mtime) AS oldest, MAX(mtime) AS newest FROM sessions"
+        ).fetchone()
+        return {
+            "total_sessions": sum(p["sessions"] for p in projects),
+            "total_messages": sum(p["messages"] for p in projects),
+            "projects": projects,
+            "oldest": span["oldest"],
+            "newest": span["newest"],
+        }
+
+    def search(self, query, limit=60, project=None):
         query = (query or "").strip()
         if not query:
             return []
         if self.fts:
-            return self._search_fts(query, limit)
-        return self._search_like(query, limit)
+            return self._search_fts(query, limit, project)
+        return self._search_like(query, limit, project)
 
-    def _search_fts(self, query, limit):
+    def _search_fts(self, query, limit, project=None):
         # Match each whitespace token as a prefix; quote to neutralize FTS syntax.
         tokens = ['"%s"*' % t.replace('"', '') for t in query.split() if t]
         if not tokens:
             return []
         match = " ".join(tokens)
+        # bm25() is ascending (more negative = stronger match), so ordering by it
+        # puts the most relevant rows first; mtime only breaks ties. Scoping is a
+        # hard filter on project, not a ranking signal.
+        where = "messages_fts MATCH ?"
+        params = [match]
+        if project:
+            where += " AND s.project = ?"
+            params.append(project)
+        params.append(limit)
         try:
             rows = self.conn.execute(
                 """SELECT f.session_id AS session_id, f.idx AS idx, f.role AS role,
                           snippet(messages_fts, 0, '<b>', '</b>', '…', 12) AS snippet,
                           s.project AS project, s.title AS title, s.mtime AS mtime
                    FROM messages_fts f JOIN sessions s ON s.id = f.session_id
-                   WHERE messages_fts MATCH ?
-                   ORDER BY s.mtime DESC LIMIT ?""",
-                (match, limit),
+                   WHERE """ + where + """
+                   ORDER BY bm25(messages_fts), s.mtime DESC LIMIT ?""",
+                params,
             ).fetchall()
         except sqlite3.Error:
-            return self._search_like(query, limit)
+            return self._search_like(query, limit, project)
         return [dict(r) for r in rows]
 
-    def _search_like(self, query, limit):
+    def _search_like(self, query, limit, project=None):
         like = "%" + query.replace("%", "").replace("_", "") + "%"
+        where = "m.text LIKE ?"
+        params = [like]
+        if project:
+            where += " AND s.project = ?"
+            params.append(project)
+        params.append(limit)
         rows = self.conn.execute(
             """SELECT m.session_id AS session_id, m.idx AS idx, m.role AS role,
                       m.text AS text, s.project AS project, s.title AS title, s.mtime AS mtime
                FROM messages m JOIN sessions s ON s.id = m.session_id
-               WHERE m.text LIKE ? ORDER BY s.mtime DESC LIMIT ?""",
-            (like, limit),
+               WHERE """ + where + " ORDER BY s.mtime DESC LIMIT ?",
+            params,
         ).fetchall()
         out = []
         for r in rows:

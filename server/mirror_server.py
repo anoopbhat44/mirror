@@ -10,7 +10,8 @@ Routes:
   GET /api/config       -> {"theme": ...}
   GET /api/sessions     -> {"sessions": [...], "active": "<id>"}
   GET /api/conversation[?session=<id>] -> {"items": [...], "version": "..."}
-  GET /api/search?q=... -> {"results": [...], "fts": bool}
+  GET /api/search?q=...[&project=<name>] -> {"results": [...], "fts": bool}
+  GET /api/stats        -> {"total_sessions", "total_messages", "projects":[...], ...}
   GET /events           -> Server-Sent Events; emits on active-transcript change
 """
 
@@ -135,7 +136,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/conversation":
             return self._serve_conversation(query.get("session", [None])[0])
         if path == "/api/search":
-            return self._serve_search(query.get("q", [""])[0])
+            return self._serve_search(query.get("q", [""])[0], query.get("project", [None])[0])
+        if path == "/api/stats":
+            return self._serve_stats()
         if path == "/events":
             return self._serve_events()
         if path in ALLOWED_STATIC:
@@ -203,14 +206,22 @@ class Handler(BaseHTTPRequestHandler):
             s["live"] = (now - (s.get("mtime") or 0)) < LIVE_WINDOW
         self._json({"sessions": sessions, "active": active})
 
-    def _serve_search(self, query):
+    def _serve_search(self, query, project=None):
         idx = self._open_index()
         try:
-            results = idx.search(query)
+            results = idx.search(query, project=project)
             fts = idx.fts
         finally:
             idx.close()
-        self._json({"results": results, "fts": fts, "query": query})
+        self._json({"results": results, "fts": fts, "query": query, "project": project})
+
+    def _serve_stats(self):
+        idx = self._open_index()
+        try:
+            data = idx.stats()
+        finally:
+            idx.close()
+        self._json(data)
 
     def _serve_events(self):
         self.send_response(200)

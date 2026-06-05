@@ -23,6 +23,13 @@ const findCount = document.getElementById("find-count");
 const findPrev = document.getElementById("find-prev");
 const findNext = document.getElementById("find-next");
 const findClose = document.getElementById("find-close");
+const scopeRow = document.getElementById("scope-row");
+const scopeCheck = document.getElementById("scope-project");
+const scopeLabel = document.getElementById("scope-label");
+const statsBtn = document.getElementById("stats-btn");
+const statsView = document.getElementById("stats-view");
+const statsInner = document.getElementById("stats-inner");
+const statsClose = document.getElementById("stats-close");
 const toBottom = document.getElementById("to-bottom");
 const menuBtn = document.getElementById("menu");
 const sidebar = document.getElementById("sidebar");
@@ -232,6 +239,14 @@ function updateCurrentTitle() {
   }
   resumeBtn.hidden = !currentId;
   exportBtn.hidden = !currentId;
+  const proj = (sessionsById[currentId] || {}).project;
+  if (proj) {
+    scopeLabel.textContent = "Only " + proj;
+    scopeRow.hidden = false;
+  } else {
+    scopeRow.hidden = true;
+    scopeCheck.checked = false;
+  }
 }
 
 function selectSession(id) {
@@ -558,6 +573,7 @@ searchEl.addEventListener("input", () => {
   const q = searchEl.value.trim();
   searchTimer = setTimeout(() => runSearch(q), 200);
 });
+scopeCheck.addEventListener("change", () => runSearch(searchEl.value.trim()));
 
 async function runSearch(q) {
   if (!q) {
@@ -566,9 +582,12 @@ async function runSearch(q) {
     return;
   }
   searchMode = true;
+  let url = "/api/search?q=" + encodeURIComponent(q);
+  const proj = (sessionsById[currentId] || {}).project;
+  if (scopeCheck.checked && proj) url += "&project=" + encodeURIComponent(proj);
   let data;
   try {
-    data = await (await fetch("/api/search?q=" + encodeURIComponent(q), { cache: "no-store" })).json();
+    data = await (await fetch(url, { cache: "no-store" })).json();
   } catch (e) { return; }
   renderSearchResults(data.results || [], q);
 }
@@ -639,6 +658,123 @@ function highlightInConversation(query) {
     first.scrollIntoView({ block: "center" });
   }
 }
+
+// ---------- stats / insights ----------
+// Global numbers come from /api/stats (cheap index counts). The per-session
+// breakdown is derived client-side from the already-rendered items, so it costs
+// no extra server work and stays in sync with what you are looking at.
+function aggregateCurrentSession(items) {
+  let userTurns = 0, asstTurns = 0, thinking = 0;
+  const tools = {};
+  (items || []).forEach((it) => {
+    if (it.role === "user") {
+      userTurns++;
+    } else if (it.role === "assistant") {
+      asstTurns++;
+      (it.blocks || []).forEach((b) => {
+        if (b.type === "thinking") thinking++;
+        else if (b.type === "tool_use") {
+          const name = b.name || "tool";
+          tools[name] = (tools[name] || 0) + 1;
+        }
+      });
+    }
+  });
+  const list = Object.keys(tools).map((k) => ({ name: k, count: tools[k] }))
+    .sort((a, b) => b.count - a.count);
+  return { userTurns, asstTurns, thinking, tools: list,
+           toolTotal: list.reduce((n, t) => n + t.count, 0) };
+}
+
+function statNumber(value, label) {
+  const w = el("div", "stat-num");
+  w.appendChild(el("span", "stat-value", escapeText(String(value))));
+  w.appendChild(el("span", "stat-label", escapeText(label)));
+  return w;
+}
+
+function barRow(label, sub, value, max) {
+  const row = el("div", "bar-row");
+  const head = el("div", "bar-head");
+  head.appendChild(el("span", "bar-label", escapeText(label)));
+  head.appendChild(el("span", "bar-val", escapeText(sub)));
+  row.appendChild(head);
+  const track = el("div", "bar-track");
+  const fill = el("div", "bar-fill");
+  fill.style.width = (max > 0 ? Math.max(3, Math.round((value / max) * 100)) : 0) + "%";
+  track.appendChild(fill);
+  row.appendChild(track);
+  return row;
+}
+
+function renderStats(data) {
+  statsInner.innerHTML = "";
+
+  const g = el("section", "stats-section");
+  g.appendChild(el("h3", "stats-h", "Across all sessions"));
+  const nums = el("div", "stat-nums");
+  nums.appendChild(statNumber(data.total_sessions || 0, "sessions"));
+  nums.appendChild(statNumber(data.total_messages || 0, "messages"));
+  nums.appendChild(statNumber((data.projects || []).length, "projects"));
+  g.appendChild(nums);
+  statsInner.appendChild(g);
+
+  const projects = (data.projects || []);
+  if (projects.length) {
+    const ps = el("section", "stats-section");
+    ps.appendChild(el("h3", "stats-h", "Busiest projects"));
+    const max = projects.reduce((m, p) => Math.max(m, p.messages || 0), 0);
+    projects.slice(0, 12).forEach((p) => {
+      const n = p.sessions || 0;
+      ps.appendChild(barRow(p.project, n + (n === 1 ? " session · " : " sessions · ") + (p.messages || 0) + " msg", p.messages || 0, max));
+    });
+    statsInner.appendChild(ps);
+  }
+
+  const s = sessionsById[currentId];
+  const agg = aggregateCurrentSession(rendered);
+  const cs = el("section", "stats-section");
+  cs.appendChild(el("h3", "stats-h", "This session"));
+  const title = (s && (s.title && s.title.trim() ? s.title : s.project)) || "Current session";
+  cs.appendChild(el("div", "stats-sub", escapeText(title)));
+  const nums2 = el("div", "stat-nums");
+  nums2.appendChild(statNumber(agg.userTurns, "your turns"));
+  nums2.appendChild(statNumber(agg.asstTurns, "replies"));
+  nums2.appendChild(statNumber(agg.toolTotal, "tool calls"));
+  nums2.appendChild(statNumber(agg.thinking, "thinking"));
+  cs.appendChild(nums2);
+  if (agg.tools.length) {
+    cs.appendChild(el("div", "stats-sub", "Tools used"));
+    const tmax = agg.tools[0].count;
+    agg.tools.slice(0, 10).forEach((t) => cs.appendChild(barRow(t.name, String(t.count), t.count, tmax)));
+  }
+  statsInner.appendChild(cs);
+}
+
+async function openStats() {
+  statsBtn.setAttribute("aria-pressed", "true");
+  statsView.hidden = false;
+  statsInner.innerHTML = "";
+  statsInner.appendChild(el("div", "stats-loading", "Loading…"));
+  let data;
+  try {
+    data = await (await fetch("/api/stats", { cache: "no-store" })).json();
+  } catch (e) {
+    statsInner.innerHTML = "";
+    statsInner.appendChild(el("div", "stats-loading", "Could not load insights."));
+    return;
+  }
+  renderStats(data);
+}
+function closeStats() {
+  statsView.hidden = true;
+  statsBtn.setAttribute("aria-pressed", "false");
+}
+statsBtn.addEventListener("click", () => { if (statsView.hidden) openStats(); else closeStats(); });
+statsClose.addEventListener("click", closeStats);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !statsView.hidden) { closeStats(); }
+});
 
 // ---------- markdown export ----------
 const EXPORT_IMG_MAX = 200000; // base64 chars; larger images get a note, not an embed
