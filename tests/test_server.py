@@ -23,8 +23,11 @@ class TestServer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tmp = tempfile.mkdtemp(prefix="mirror-test-")
+        # Isolate the projects dir (empty) so active-session resolution falls back
+        # to the active.json pointer below, not the real ~/.claude/projects.
+        cls.projects = tempfile.mkdtemp(prefix="mirror-test-proj-")
         cls.port = _free_port()
-        env = dict(os.environ, MIRROR_STATE_DIR=cls.tmp)
+        env = dict(os.environ, MIRROR_STATE_DIR=cls.tmp, MIRROR_PROJECTS_DIR=cls.projects)
 
         # Point the active pointer at the fixture transcript.
         active = {

@@ -14,6 +14,24 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from launcher import ensure_running  # noqa: E402
 
 
+def mirror_context(url):
+    """The additionalContext injected at session start.
+
+    Beyond pointing the model at the live view, it steers diagram output toward
+    fenced ``mermaid`` blocks. Mirror renders those as real diagrams at no extra
+    cost; ASCII art still shows fine but is never upgraded. This is a one-line
+    formatting preference, not a behavior change, and rides the normal session.
+    """
+    return (
+        "A live HTML mirror of this conversation is available at %s "
+        "(localhost only). Mention this link to the user. "
+        "When you would draw a diagram (flowchart, sequence, architecture, "
+        "state, class, or ER), output it as a fenced ```mermaid code block "
+        "rather than ASCII art: Mirror renders mermaid as a real diagram in "
+        "that view. Plain ASCII still displays fine." % url
+    )
+
+
 def main():
     try:
         payload = json.load(sys.stdin)
@@ -36,10 +54,7 @@ def main():
                 "systemMessage": "\U0001FA9E Mirror live view: %s" % url,
                 "hookSpecificOutput": {
                     "hookEventName": "SessionStart",
-                    "additionalContext": (
-                        "A live HTML mirror of this conversation is available at %s "
-                        "(localhost only). Mention this link to the user." % url
-                    ),
+                    "additionalContext": mirror_context(url),
                 },
             }
         )

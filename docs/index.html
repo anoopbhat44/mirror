@@ -190,8 +190,8 @@ claude</pre>
       <div class="feat">
         <div class="card"><span class="ic">&#128172;</span><h3>Watch the live session</h3><p>The conversation you are in appears on the right and updates after every turn, keeping your scroll position. A green dot marks it live.</p></div>
         <div class="card"><span class="ic">&#128194;</span><h3>Switch between sessions</h3><p>The left sidebar lists every Claude Code session, grouped by project and sorted by recency. Click any one to read it.</p></div>
-        <div class="card"><span class="ic">&#128269;</span><h3>Search across everything</h3><p>Type in the search box to find any message across all your sessions. Click a result to jump to it with the match highlighted.</p></div>
-        <div class="card"><span class="ic">&#127769;</span><h3>Make it yours</h3><p>From the top bar: toggle dark and light, turn diagrams on or off, hide thinking or tool calls, and copy a Resume command for any session. It remembers your choices. Run <code class="inline">/mirror</code> to reopen the link.</p></div>
+        <div class="card"><span class="ic">&#128269;</span><h3>Search and find</h3><p>Type in the search box to find any message across all your sessions. Press &#8984;F / Ctrl&#8209;F to find within the open session, reaching into collapsed thinking and tool calls. Click a result to jump to it.</p></div>
+        <div class="card"><span class="ic">&#127769;</span><h3>Make it yours</h3><p>From the top bar: toggle dark and light, turn diagrams on or off, hide thinking or tool calls, export a session to Markdown, and copy a Resume command (or hover any sidebar row). It remembers your choices. Run <code class="inline">/mirror</code> to reopen the link.</p></div>
       </div>
     </section>
 
@@ -226,13 +226,18 @@ claude</pre>
             <div class="frame"><div class="chrome"><i></i><i></i><i></i><span class="addr">localhost:7842 &middot; search</span></div><div class="shot"><img src="search.png" alt="Searching across all sessions in Mirror, with matches highlighted in the results."></div></div>
             <figcaption class="cap"><b>Find anything across every session,</b> with matches highlighted and a click to jump straight to them.</figcaption>
           </figure>
+          <figure class="slide">
+            <div class="ask"><span class="ask-tag">In Mirror</span><span class="ask-text">Press &#8984;F / Ctrl&#8209;F, then type</span></div>
+            <div class="frame"><div class="chrome"><i></i><i></i><i></i><span class="addr">localhost:7842 &middot; find</span></div><div class="shot"><img src="feat-find.png" alt="In-page find searching the current session, opening a collapsed thinking block to reveal the highlighted match."></div></div>
+            <figcaption class="cap"><b>Find inside the current session,</b> even text tucked inside collapsed thinking and tool calls. Mirror opens each one as you step through the matches.</figcaption>
+          </figure>
         </div>
         <button class="cbtn prev" id="mprev" type="button" aria-label="Previous example">&#8249;</button>
         <button class="cbtn next" id="mnext" type="button" aria-label="Next example">&#8250;</button>
         <div class="dots" id="mdots" role="tablist" aria-label="Choose example"></div>
       </div>
       <div class="callout" style="margin-top: 24px;">
-        <p>And from the top bar: toggle <b>Diagrams</b>, hide <b>thinking</b> or <b>tool calls</b> from the filter menu, copy a <b>Resume</b> command for any session, and run <code class="inline">/mirror</code> any time to reopen the link.</p>
+        <p>And from the top bar: press <b>&#8984;F / Ctrl&#8209;F</b> to find within a session, <b>Export</b> it to Markdown, toggle <b>Diagrams</b>, hide <b>thinking</b> or <b>tool calls</b> from the filter menu, copy a <b>Resume</b> command (top bar for the open session, or hover any row in the sidebar), and run <code class="inline">/mirror</code> any time to reopen the link.</p>
       </div>
     </section>
 
@@ -243,7 +248,8 @@ claude</pre>
         <div class="card"><h3>No API cost</h3><p>Mirror never calls a model. It renders the transcript your session already writes, so it rides on the Claude subscription you have.</p></div>
         <div class="card"><h3>Localhost only</h3><p>The server binds to 127.0.0.1. Your transcripts, with their secrets and file contents, never leave your machine.</p></div>
         <div class="card"><h3>Multi-session workspace</h3><p>Every session in one place, grouped by project, with live indicators and message counts.</p></div>
-        <div class="card"><h3>Full-text search</h3><p>Fast search across your whole history, powered by SQLite under the hood. No setup.</p></div>
+        <div class="card"><h3>Search and in-page find</h3><p>Fast full-text search across your whole history, powered by SQLite. Plus &#8984;F / Ctrl&#8209;F to find within a session, including text inside collapsed blocks.</p></div>
+        <div class="card"><h3>Export and resume</h3><p>Export any session to Markdown with one click. Copy a <code class="inline">claude --resume</code> command from the top bar or any sidebar row to pick a conversation back up.</p></div>
         <div class="card"><h3>Real rendering</h3><p>Markdown, highlighted code, tables, and collapsible tool calls and thinking. Wide content uses the space.</p></div>
         <div class="card"><h3>Diagrams and images</h3><p>Mermaid blocks render as diagrams, with a per-diagram source toggle. Pasted images and screenshot tool results show inline.</p></div>
         <div class="card"><h3>Built for long sessions</h3><p>Runs of tool calls collapse into a group, code blocks get a copy button, and long output folds behind "Show more".</p></div>

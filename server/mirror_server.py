@@ -15,6 +15,7 @@ Routes:
 """
 
 import argparse
+import glob
 import json
 import os
 import sys
@@ -62,16 +63,45 @@ def _transcript_version(path):
         return "none"
 
 
-def _active_transcript():
+def _newest_transcript():
+    """The most recently modified transcript under PROJECTS_DIR, or None."""
+    newest = None
+    newest_mtime = -1.0
+    for path in glob.glob(os.path.join(PROJECTS_DIR, "*", "*.jsonl")):
+        try:
+            mtime = os.stat(path).st_mtime
+        except OSError:
+            continue
+        if mtime > newest_mtime:
+            newest_mtime = mtime
+            newest = path
+    return newest
+
+
+def _resolve_active():
+    """Return ``(transcript_path, session_id)`` for the live/default view.
+
+    Prefer the most recently modified transcript so the view follows the session
+    you are actually in, even when ``active.json`` is stale (a hook missed, or a
+    session was resumed without SessionStart). The session id is the transcript
+    filename stem, matching how the index keys sessions. Fall back to the
+    ``active.json`` pointer only when no transcripts are discoverable.
+    """
+    newest = _newest_transcript()
+    if newest:
+        return newest, os.path.splitext(os.path.basename(newest))[0]
     active = state.read_active()
-    if not active:
-        return None
-    return active.get("transcript_path")
+    if active:
+        return active.get("transcript_path"), active.get("session_id")
+    return None, None
+
+
+def _active_transcript():
+    return _resolve_active()[0]
 
 
 def _active_session_id():
-    active = state.read_active()
-    return active.get("session_id") if active else None
+    return _resolve_active()[1]
 
 
 class Handler(BaseHTTPRequestHandler):

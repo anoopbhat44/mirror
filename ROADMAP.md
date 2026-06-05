@@ -9,10 +9,14 @@ already writes, so it rides on your existing Claude Code subscription. (Codex an
 are a later adapter, see v2.)
 
 **Status (2026-06-05):** v1 is shipped. v2 (the local workspace: multi-session, search,
-incremental rendering, config) is **merged to `main`** (PR #1). A second batch of v2 polish is
-implemented on branch `v2-polish` (**PR #2**): tool-call grouping, image rendering (pasted +
-screenshot tool results), copy-code and long-output show-more, mermaid diagram rendering with a
-UI toggle, and a `/mirror` slash command. Remaining v2 polish and the SQLite decision are below.
+incremental rendering, config) is **merged to `main`** (PR #1), as is the v2-polish batch (PR #2:
+tool-call grouping, image rendering, copy-code and long-output show-more, mermaid rendering with a
+UI toggle, `/mirror`, filters, top-bar Resume). PR #3 (plugin v0.4.0) added in-page find (Cmd/Ctrl-F
+that searches into collapsed thinking and tool blocks), per-session Resume in the sidebar, Markdown
+export of a session, a SessionStart nudge so Claude emits ```mermaid fences instead of ASCII art,
+and a live-view robustness fix: the default view now follows the most recently modified transcript
+instead of a possibly-stale `active.json` pointer, so it updates as the conversation proceeds even
+when a hook misses. Remaining polish and the SQLite decision are below.
 
 ---
 
@@ -122,8 +126,15 @@ lazy-loaded) with a top-bar Diagrams toggle plus a per-block Source/Diagram swit
 slash command that prints and opens the live-view link; a filter menu to hide thinking and/or
 tool-call blocks (persisted); a Resume button that copies `claude --resume <id>` for the viewed
 session. A "Try these" recipes section on the landing page shows how to trigger each feature.
-**Remaining v2 polish (future PRs):** optional PDF/Markdown export; accessibility pass;
-per-session (hover) resume in the sidebar; anchored headings.
+
+**Landed after PR #2 (45 tests passing, browser-verified):** in-page find (Cmd/Ctrl-F) that
+searches into collapsed thinking and tool blocks, opening them as you step through matches and
+skipping filter-hidden ones; per-session Resume in the sidebar (hover a row to copy its
+`claude --resume <id>`); one-click Markdown export of the viewed session (built client-side, no
+server work); and a SessionStart `additionalContext` nudge that steers diagram output toward
+fenced ```mermaid blocks (rendered for free in the view) instead of ASCII art.
+**Remaining v2 polish (future PRs):** accessibility pass; anchored headings; PDF export; a density
+switch.
 
 **Goal:** make the free local tool one you live in. Refine the reading experience, view every
 session instead of only the active one, search across them, and give the plugin real options.
@@ -141,15 +152,22 @@ anything is ever charged for (v3).
   inline; oversized images degrade to a placeholder rather than bloating the payload.
 - **Long output.** (done, PR #2) Tall code/result blocks clamp behind a "Show more" toggle; every
   code block has a hover Copy button. Mermaid diagrams render (toggleable). Anchored headings TODO.
-- **Find and filter.** (filters done, PR #2) A top-bar filter menu hides thinking and/or
-  tool-call blocks (persisted). Still TODO: in-page find across collapsed messages, a density switch.
+- **Find and filter.** (done) A top-bar filter menu hides thinking and/or tool-call blocks
+  (persisted), and Cmd/Ctrl-F opens an in-page find that searches into collapsed thinking and tool
+  blocks, expands them as you navigate, and skips filter-hidden content. Still TODO: a density switch.
+- **Export.** (done) One-click Markdown export of the viewed session, built entirely client-side
+  from the rendered items (text, thinking, tool calls with input/result, mermaid fences, small
+  images inline). PDF export is still TODO.
 - **Polish.** Accessibility (focus, ARIA, reduced motion), keyboard nav, a long-session
-  jump-to-turn / minimap. Optional local export of a session to PDF or Markdown.
+  jump-to-turn / minimap. PDF export.
 
 ### b. Multiple Claude Code sessions
 - The one shared server tracks **every** session, not a single active pointer. Each session's
   hooks register its transcript; the server also discovers past sessions by scanning
   `~/.claude/projects`.
+- (done, PR #3) The live/default view follows the most recently modified transcript, so a stale
+  `active.json` (a missed hook, or a server left running from an earlier session) can't strand the
+  view on a dead session. Reading a specific past session by id is unaffected.
 - Endpoints: list sessions (project, recency, title, message count, live flag), fetch one by id,
   per-session update notifications.
 - UI: a session switcher / sidebar grouped by project, sorted by recency, a live dot on the
@@ -158,15 +176,15 @@ anything is ever charged for (v3).
   thin adapters, so Mirror becomes the one place to read any agent session (principle 5).
 
 ### c. Search
-- **In-session find first** (client-side, instant).
-- **Cross-session search next** (the "did we solve this before" feature). This is what motivates
-  the SQLite / FTS5 decision in the next section.
+- **In-session find** (done): client-side, instant Cmd/Ctrl-F that reaches into collapsed blocks.
+- **Cross-session search** (done, PR #1): the "did we solve this before" feature. This is what
+  motivates the SQLite / FTS5 decision in the next section.
 
 ### d. Resume and view state
 - Remember the last session you were viewing, your scroll, and which disclosures were open
   (browser `localStorage`, no server state).
-- (done, PR #2) A Resume button in the top bar copies `claude --resume <id>` for the viewed
-  session; Mirror shows it, Claude Code runs it. Future: a per-session (hover) resume in the sidebar.
+- (done) A Resume button in the top bar copies `claude --resume <id>` for the viewed session, and
+  every sidebar row reveals its own Resume on hover; Mirror shows the command, Claude Code runs it.
 
 ### e. Skill options (plugin config + commands)
 - A config file (`~/.mirror/config.*`): port, bind address, default theme, auto-open browser,
@@ -314,7 +332,7 @@ Still grounded in real demand, but bigger bets. Each needs validation, not faith
 | Version | Theme | Status | Cost to user | Open / paid |
 |---|---|---|---|---|
 | v1 | Local live view | Shipped | Free | Open source |
-| v2 | Local workspace: multi-session, search, incremental render, config | Merged (PR #1); polish in PR #2 | Free | Open source |
+| v2 | Local workspace: multi-session, search, incremental render, config | Merged (PR #1, #2, #3) | Free | Open source |
 | v3 | Artifacts + public sharing | Planned | Free local, paid hosting | Open core |
 | v4 | Team, analytics, collaboration, interactive control | Vision | Paid (enterprise) | Open core + hosted |
 

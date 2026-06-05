@@ -47,6 +47,10 @@ class TestServerV2(unittest.TestCase):
             u("Explain SQLite FTS5"),
             a("m2", "FTS5 is full text search for SQLite."),
         ])
+        # The active session is, by definition, the one most recently written to.
+        # alpha is created first, so bump its mtime to be newest; the live view
+        # follows the newest transcript, and the pointer below agrees.
+        os.utime(cls.alpha, (time.time() + 10, time.time() + 10))
         # active pointer -> alpha
         with open(os.path.join(cls.tmp, "active.json"), "w") as fh:
             json.dump({"transcript_path": cls.alpha, "session_id": "sess-alpha", "port": 0}, fh)

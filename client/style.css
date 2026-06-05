@@ -272,11 +272,50 @@ details[open] > summary::before { transform: rotate(45deg); }
 
 .diagram-toggle.on { color: var(--tool); border-color: color-mix(in oklch, var(--tool) 40%, var(--border-soft)); }
 
-/* ---------- filters + resume ---------- */
-.resume-btn { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 5px 11px 5px 9px; border: 1px solid var(--border-soft); border-radius: 8px; background: var(--bg-raised); color: var(--muted); font: 500 12.5px var(--sans); cursor: pointer; transition: color 0.15s ease, border-color 0.15s ease; }
-.resume-btn:hover { color: var(--text); border-color: var(--border); }
-.resume-btn svg { width: 15px; height: 15px; }
-.resume-btn[hidden] { display: none; }
+/* ---------- filters + resume + export ---------- */
+.bar-btn { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 5px 11px 5px 9px; border: 1px solid var(--border-soft); border-radius: 8px; background: var(--bg-raised); color: var(--muted); font: 500 12.5px var(--sans); cursor: pointer; transition: color 0.15s ease, border-color 0.15s ease; }
+.bar-btn:hover { color: var(--text); border-color: var(--border); }
+.bar-btn svg { width: 15px; height: 15px; }
+.bar-btn[hidden] { display: none; }
+
+/* per-session resume in the sidebar */
+.session-row { position: relative; }
+.s-resume {
+  position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
+  display: grid; place-items: center; width: 26px; height: 26px; padding: 0;
+  border: 1px solid var(--border-soft); border-radius: 7px;
+  background: var(--bg-raised); color: var(--muted); cursor: pointer;
+  opacity: 0; transition: opacity 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+.s-resume svg { width: 14px; height: 14px; }
+.session-row:hover .s-resume, .s-resume:focus-visible { opacity: 1; }
+.s-resume:hover { color: var(--text); border-color: var(--border); }
+.s-resume.done { color: var(--result); border-color: color-mix(in oklch, var(--result) 45%, var(--border-soft)); opacity: 1; }
+@media (hover: none) { .s-resume { opacity: 0.75; } }
+
+/* in-page find bar */
+.find-bar {
+  position: fixed; top: 14px; right: 22px; z-index: 60;
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg-raised); border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px;
+  box-shadow: 0 14px 34px -14px oklch(0.05 0.02 var(--hue) / 0.7);
+}
+.find-bar[hidden] { display: none; }
+.find-bar input {
+  width: 210px; padding: 5px 9px; font: 13.5px var(--sans);
+  background: var(--bg); color: var(--text); border: 1px solid var(--border-soft); border-radius: 7px; outline: none;
+}
+.find-bar input:focus { border-color: var(--tool); }
+.find-bar input::placeholder { color: var(--faint); }
+.find-count { font: 11.5px var(--mono); color: var(--faint); min-width: 40px; text-align: center; }
+.find-nav { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 1px solid var(--border-soft); border-radius: 7px; background: var(--bg); color: var(--muted); cursor: pointer; font-size: 14px; line-height: 1; }
+.find-nav:hover { color: var(--text); border-color: var(--border); }
+mark.find { background: color-mix(in oklch, var(--hit) 42%, transparent); color: inherit; border-radius: 2px; padding: 0 1px; scroll-margin-top: 70px; }
+mark.find.current { background: var(--hit); color: var(--hit-ink); box-shadow: 0 0 0 2px color-mix(in oklch, var(--hit) 45%, transparent); }
+@media (max-width: 560px) {
+  .find-bar { left: 12px; right: 12px; }
+  .find-bar input { flex: 1; width: auto; }
+}
 
 .filter-wrap { position: relative; display: flex; flex: none; }
 .filter-toggle-on { color: var(--tool); }

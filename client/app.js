@@ -16,6 +16,13 @@ const showThinking = document.getElementById("show-thinking");
 const showTools = document.getElementById("show-tools");
 const resumeBtn = document.getElementById("resume-btn");
 const resumeLabel = document.getElementById("resume-label");
+const exportBtn = document.getElementById("export-btn");
+const findBar = document.getElementById("find-bar");
+const findInput = document.getElementById("find-input");
+const findCount = document.getElementById("find-count");
+const findPrev = document.getElementById("find-prev");
+const findNext = document.getElementById("find-next");
+const findClose = document.getElementById("find-close");
 const toBottom = document.getElementById("to-bottom");
 const menuBtn = document.getElementById("menu");
 const sidebar = document.getElementById("sidebar");
@@ -128,15 +135,17 @@ document.addEventListener("click", () => { if (!filterMenu.hidden) closeFilterMe
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !filterMenu.hidden) closeFilterMenu(); });
 
 // ---------- resume (copy `claude --resume <id>`) ----------
+const RESUME_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 9 12 5 16"/><line x1="12" y1="16" x2="18" y2="16"/></svg>';
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 9 17 20 6"/></svg>';
+function copyText(text, ok) {
+  try { navigator.clipboard.writeText(text).then(ok || (function () {}), function () {}); } catch (e) {}
+}
 resumeBtn.addEventListener("click", () => {
   if (!currentId) return;
-  const cmd = "claude --resume " + currentId;
-  try {
-    navigator.clipboard.writeText(cmd).then(() => {
-      resumeLabel.textContent = "Copied";
-      setTimeout(() => { resumeLabel.textContent = "Resume"; }, 1300);
-    }, () => {});
-  } catch (e) {}
+  copyText("claude --resume " + currentId, () => {
+    resumeLabel.textContent = "Copied";
+    setTimeout(() => { resumeLabel.textContent = "Resume"; }, 1300);
+  });
 });
 async function applyConfigTheme() {
   let stored = null;
@@ -186,6 +195,7 @@ function renderSessionList(sessions) {
 
 function sessionItem(s) {
   const viewed = (currentId === s.id) || (currentId === null && s.id === activeId);
+  const row = el("div", "session-row");
   const node = el("button", "session" + (viewed ? " current" : ""));
   node.type = "button";
   const title = s.title && s.title.trim() ? s.title : "(untitled session)";
@@ -194,7 +204,21 @@ function sessionItem(s) {
     '<span class="s-body"><span class="s-title">' + escapeText(title) + "</span>" +
     '<span class="s-meta">' + escapeText(relTime(s.mtime)) + " &middot; " + (s.msg_count || 0) + " msg</span></span>";
   node.addEventListener("click", () => selectSession(s.id));
-  return node;
+  row.appendChild(node);
+  const resume = el("button", "s-resume", RESUME_SVG);
+  resume.type = "button";
+  resume.title = "Copy 'claude --resume " + s.id + "'";
+  resume.setAttribute("aria-label", "Copy resume command for this session");
+  resume.addEventListener("click", (e) => {
+    e.stopPropagation();
+    copyText("claude --resume " + s.id, () => {
+      resume.innerHTML = CHECK_SVG;
+      resume.classList.add("done");
+      setTimeout(() => { resume.innerHTML = RESUME_SVG; resume.classList.remove("done"); }, 1300);
+    });
+  });
+  row.appendChild(resume);
+  return row;
 }
 
 function updateCurrentTitle() {
@@ -207,6 +231,7 @@ function updateCurrentTitle() {
     currentTitleEl.textContent = "Mirror";
   }
   resumeBtn.hidden = !currentId;
+  exportBtn.hidden = !currentId;
 }
 
 function selectSession(id) {
@@ -523,6 +548,7 @@ async function loadConversation(force) {
     window.scrollTo(0, document.body.scrollHeight);
   }
   updateToBottom();
+  reapplyFind();
   setStatus(isViewingActive() ? "live" : "idle", isViewingActive() ? "live" : "viewing");
 }
 
@@ -613,6 +639,182 @@ function highlightInConversation(query) {
     first.scrollIntoView({ block: "center" });
   }
 }
+
+// ---------- markdown export ----------
+const EXPORT_IMG_MAX = 200000; // base64 chars; larger images get a note, not an embed
+function mdImage(img) {
+  if (img.omitted) return "_[image omitted (" + (img.approx_kb || "?") + " KB)]_";
+  if (img.url) return "![image](" + img.url + ")";
+  if (img.data) {
+    if (img.data.length > EXPORT_IMG_MAX) return "_[image not exported (" + Math.round(img.data.length * 3 / 4 / 1024) + " KB)]_";
+    return "![image](data:" + (img.media_type || "image/png") + ";base64," + img.data + ")";
+  }
+  return "";
+}
+function conversationToMarkdown(items, meta) {
+  const out = ["# " + (meta.title || "Mirror session"), ""];
+  const sub = [meta.project, meta.id].filter(Boolean).join(" · ");
+  if (sub) { out.push("_" + sub + "_", ""); }
+  items.forEach((item) => {
+    if (item.role === "user") {
+      if (item.kind === "command") {
+        out.push("**You:** `/" + (item.command || "").replace(/^\//, "") + "`", "");
+      } else {
+        out.push("### You", "");
+        if (item.text) out.push(item.text, "");
+        (item.images || []).forEach((im) => out.push(mdImage(im), ""));
+      }
+      return;
+    }
+    out.push("### Claude", "");
+    (item.blocks || []).forEach((b) => {
+      if (b.type === "text") { out.push(b.text || "", ""); }
+      else if (b.type === "thinking") {
+        out.push("<details><summary>Thinking</summary>", "", b.text || "", "", "</details>", "");
+      } else if (b.type === "tool_use") {
+        out.push("**Tool: " + (b.name || "tool") + "**", "", "```json", safeJson(b.input), "```");
+        if (b.result) out.push("", "```", b.result, "```");
+        (b.result_images || []).forEach((im) => out.push("", mdImage(im)));
+        out.push("");
+      }
+    });
+  });
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+}
+function slugify(s) {
+  return (s || "session").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "session";
+}
+function exportMarkdown() {
+  if (!rendered.length) return;
+  const s = sessionsById[currentId] || {};
+  const title = s.title && s.title.trim() ? s.title : (s.project || "Mirror session");
+  const text = conversationToMarkdown(rendered, { title: title, project: s.project, id: currentId });
+  const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "mirror-" + slugify(title) + ".md";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+exportBtn.addEventListener("click", exportMarkdown);
+
+// ---------- in-page find (searches into collapsed details) ----------
+let findHits = [];
+let findIdx = -1;
+let findQuery = "";
+
+function findSkip(textNode) {
+  const p = textNode.parentElement;
+  if (!p) return true;
+  if (p.closest("script,style")) return true;
+  if (p.closest(".mermaid-diagram") || p.closest("svg")) return true; // rendered SVG labels
+  const msrc = p.closest(".mermaid-source"); // diagram mode hides the source
+  if (msrc && msrc.hidden) return true;
+  if (root.getAttribute("data-hide-thinking") === "1" && p.closest("details.thinking")) return true;
+  if (root.getAttribute("data-hide-tools") === "1" && (p.closest("details.tool") || p.closest(".tool-group"))) return true;
+  return false;
+}
+function clearFind() {
+  conversation.querySelectorAll("mark.find").forEach((m) => {
+    m.replaceWith(document.createTextNode(m.textContent));
+  });
+  conversation.normalize();
+  findHits = [];
+}
+function markFind(needle) {
+  const walker = document.createTreeWalker(conversation, NodeFilter.SHOW_TEXT, {
+    acceptNode(n) {
+      if (!n.nodeValue || !n.nodeValue.toLowerCase().includes(needle)) return NodeFilter.FILTER_REJECT;
+      return findSkip(n) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+    },
+  });
+  const targets = [];
+  while (walker.nextNode()) targets.push(walker.currentNode);
+  targets.forEach((textNode) => {
+    const text = textNode.nodeValue;
+    const low = text.toLowerCase();
+    const frag = document.createDocumentFragment();
+    let i = 0, at;
+    while ((at = low.indexOf(needle, i)) !== -1) {
+      if (at > i) frag.appendChild(document.createTextNode(text.slice(i, at)));
+      const mark = el("mark", "find");
+      mark.textContent = text.slice(at, at + needle.length);
+      frag.appendChild(mark);
+      i = at + needle.length;
+    }
+    if (i < text.length) frag.appendChild(document.createTextNode(text.slice(i)));
+    textNode.parentNode.replaceChild(frag, textNode);
+  });
+  return Array.from(conversation.querySelectorAll("mark.find"));
+}
+function updateFindCount() {
+  findCount.textContent = (findHits.length ? findIdx + 1 : 0) + "/" + findHits.length;
+}
+function setFindCurrent(idx, scroll) {
+  if (!findHits.length) { findIdx = -1; updateFindCount(); return; }
+  if (findHits[findIdx]) findHits[findIdx].classList.remove("current");
+  findIdx = (idx % findHits.length + findHits.length) % findHits.length;
+  const cur = findHits[findIdx];
+  cur.classList.add("current");
+  let d = cur.closest("details");
+  while (d) { d.open = true; d = d.parentElement && d.parentElement.closest("details"); }
+  const clamped = cur.closest(".code-wrap.clamped"); // reveal a match hidden by the clamp
+  if (clamped) {
+    clamped.classList.remove("clamped");
+    const more = clamped.querySelector(".more-btn");
+    if (more) more.textContent = "Show less";
+  }
+  if (scroll) cur.scrollIntoView({ block: "center" });
+  updateFindCount();
+}
+function runFind(query) {
+  clearFind();
+  findQuery = query;
+  findIdx = -1;
+  if (!query) { updateFindCount(); return; }
+  findHits = markFind(query.toLowerCase());
+  if (findHits.length) setFindCurrent(0, true);
+  else updateFindCount();
+}
+function reapplyFind() {
+  if (findBar.hidden || !findQuery) return;
+  const prev = findIdx;
+  clearFind();
+  findHits = markFind(findQuery.toLowerCase());
+  if (findHits.length) setFindCurrent(Math.min(Math.max(prev, 0), findHits.length - 1), false);
+  else { findIdx = -1; updateFindCount(); }
+}
+function openFind() {
+  findBar.hidden = false;
+  let sel = "";
+  try { sel = String(window.getSelection()).trim(); } catch (e) {}
+  if (sel && sel.length <= 80 && !sel.includes("\n")) findInput.value = sel;
+  findInput.focus();
+  findInput.select();
+  if (findInput.value) runFind(findInput.value);
+}
+function closeFind() {
+  findBar.hidden = true;
+  clearFind();
+  findQuery = "";
+  findIdx = -1;
+}
+findInput.addEventListener("input", () => runFind(findInput.value));
+findInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); setFindCurrent(findIdx + (e.shiftKey ? -1 : 1), true); }
+  else if (e.key === "Escape") { e.preventDefault(); closeFind(); }
+});
+findPrev.addEventListener("click", () => setFindCurrent(findIdx - 1, true));
+findNext.addEventListener("click", () => setFindCurrent(findIdx + 1, true));
+findClose.addEventListener("click", closeFind);
+document.addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && (e.key === "f" || e.key === "F")) {
+    e.preventDefault();
+    openFind();
+  }
+});
 
 // ---------- sidebar (mobile) ----------
 function openSidebar() { sidebar.classList.add("open"); scrim.classList.add("show"); }

@@ -10,11 +10,14 @@ clean, auto-updating document with a session switcher and full-text search.
   secrets, file contents, and tool output) never leave your machine.
 - **Multi-session.** A sidebar lists every session, grouped by project, with the live
   one marked. Click any session to read it.
-- **Search.** Full-text search across all your sessions (SQLite FTS5 under the hood,
-  with a graceful fallback). Click a result to jump to the match.
+- **Search and find.** Full-text search across all your sessions (SQLite FTS5 under the
+  hood, with a graceful fallback); click a result to jump to the match. Press Cmd/Ctrl-F to
+  find within the open session, reaching into collapsed thinking and tool blocks.
 - **Readable tool-heavy turns.** Runs of tool calls collapse into a single group, code
   blocks get a copy button, and long output folds behind "Show more". A filter menu hides
-  thinking or tool blocks, and a Resume button copies `claude --resume <id>` for any session.
+  thinking or tool blocks.
+- **Export and resume.** Export any session to Markdown with one click, and copy a
+  `claude --resume <id>` command from the top bar or any sidebar row.
 - **Diagrams and images.** Fenced `mermaid` blocks render as diagrams (toggle in the top
   bar, or per block); pasted images and screenshot tool results show inline.
 - **Zero dependencies.** Pure Python 3 standard library on the server. No `pip`, no `npm`.
