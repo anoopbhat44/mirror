@@ -120,6 +120,20 @@ class TestServerV2(unittest.TestCase):
         data = self.get_json("/api/search?q=")
         self.assertEqual(data["results"], [])
 
+    def test_search_scoped_by_project(self):
+        data = self.get_json("/api/search?q=FTS5&project=beta")
+        self.assertTrue(data["results"])
+        self.assertTrue(all(r["project"] == "beta" for r in data["results"]))
+        other = self.get_json("/api/search?q=FTS5&project=alpha")
+        self.assertEqual(other["results"], [])
+
+    def test_stats_endpoint(self):
+        data = self.get_json("/api/stats")
+        self.assertEqual(data["total_sessions"], 2)
+        self.assertEqual(data["total_messages"], 4)
+        projects = {p["project"] for p in data["projects"]}
+        self.assertEqual(projects, {"alpha", "beta"})
+
 
 if __name__ == "__main__":
     unittest.main()

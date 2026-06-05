@@ -10,9 +10,13 @@ clean, auto-updating document with a session switcher and full-text search.
   secrets, file contents, and tool output) never leave your machine.
 - **Multi-session.** A sidebar lists every session, grouped by project, with the live
   one marked. Click any session to read it.
-- **Search and find.** Full-text search across all your sessions (SQLite FTS5 under the
-  hood, with a graceful fallback); click a result to jump to the match. Press Cmd/Ctrl-F to
-  find within the open session, reaching into collapsed thinking and tool blocks.
+- **Search and find.** Relevance-ranked full-text search across all your sessions (SQLite
+  FTS5 `bm25` under the hood, with a graceful fallback); scope it to the current project
+  with one toggle, and click a result to jump to the match. Press Cmd/Ctrl-F to find within
+  the open session, reaching into collapsed thinking and tool blocks.
+- **Insights.** An at-a-glance view of your sessions: totals, busiest projects, and a
+  per-session breakdown of your turns, replies, tool calls by name, and thinking, all read
+  from the local index.
 - **Readable tool-heavy turns.** Runs of tool calls collapse into a single group, code
   blocks get a copy button, and long output folds behind "Show more". A filter menu hides
   thinking or tool blocks.
