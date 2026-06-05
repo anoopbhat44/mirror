@@ -103,23 +103,20 @@
     .shot img { max-width: 100%; max-height: 100%; width: auto; height: auto; display: block; }
     .cap { margin: 16px 6px 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; max-width: 70ch; }
     .cap b { color: var(--text); font-weight: 620; }
-    .cbtn { position: absolute; top: clamp(135px, 21vw, 226px); width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); background: color-mix(in oklch, var(--bg-2) 86%, transparent); backdrop-filter: blur(6px); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; display: grid; place-items: center; transition: transform 0.16s ease, border-color 0.16s ease; z-index: 2; }
-    .cbtn:hover { border-color: var(--faint); transform: scale(1.07); }
+    .cbtn { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); background: color-mix(in oklch, var(--bg-2) 86%, transparent); backdrop-filter: blur(6px); color: var(--text); font-size: 22px; line-height: 1; cursor: pointer; display: grid; place-items: center; transition: transform 0.16s ease, border-color 0.16s ease; z-index: 2; }
+    .cbtn:hover { border-color: var(--faint); transform: translateY(-50%) scale(1.07); }
     .cbtn.prev { left: 10px; } .cbtn.next { right: 10px; }
     .dots { display: flex; justify-content: center; gap: 9px; margin-top: 20px; }
     .dots button { width: 8px; height: 8px; padding: 0; border-radius: 50%; border: none; background: var(--border); cursor: pointer; transition: background 0.16s ease, width 0.16s ease; }
     .dots button[aria-current="true"] { background: var(--accent); width: 22px; border-radius: 5px; }
-    /* try-these recipes */
-    .recipes { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-    .recipe { background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 14px; padding: 18px 20px; }
-    .recipe h3 { font-size: 15px; margin: 0 0 11px; font-weight: 620; }
-    .recipe .prompt { position: relative; background: oklch(0.13 0.012 var(--hue)); border: 1px solid var(--border-soft); border-radius: 10px; padding: 12px 50px 12px 14px; margin: 0; font: 13px/1.55 var(--mono); color: var(--text); white-space: pre-wrap; word-break: break-word; }
-    .recipe .prompt .copy { position: absolute; top: 8px; right: 8px; font: 11px var(--mono); color: var(--faint); background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 6px; padding: 3px 8px; cursor: pointer; transition: color 0.15s ease; }
-    .recipe .prompt .copy:hover { color: var(--text); }
-    .recipe .out { margin: 12px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.55; }
-    .recipe .out::before { content: "\2192 "; color: var(--accent); }
+    /* prompt bar above each example */
+    .ask { display: flex; align-items: center; gap: 10px; background: oklch(0.13 0.012 var(--hue)); border: 1px solid var(--border-soft); border-radius: 10px; padding: 9px 10px 9px 11px; margin-bottom: 14px; }
+    .ask-tag { flex: none; font: 600 9.5px var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); border: 1px solid color-mix(in oklch, var(--accent) 32%, transparent); border-radius: 5px; padding: 3px 7px; }
+    .ask-text { flex: 1; min-width: 0; font: 13px var(--mono); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ask .copy { flex: none; font: 11px var(--mono); color: var(--faint); background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 6px; padding: 4px 9px; cursor: pointer; transition: color 0.15s ease; }
+    .ask .copy:hover { color: var(--text); }
     @media (prefers-reduced-motion: reduce) { .track { scroll-behavior: auto; } }
-    @media (max-width: 640px) { .feat, .recipes { grid-template-columns: 1fr; } .cbtn { display: none; } }
+    @media (max-width: 640px) { .feat { grid-template-columns: 1fr; } .cbtn { display: none; } .ask-text { white-space: normal; } }
   </style>
 </head>
 <body>
@@ -199,66 +196,43 @@ claude</pre>
     </section>
 
     <section id="showcase">
-      <p class="eyebrow">See it in action</p>
-      <h2>Built for how agents actually work.</h2>
-      <p class="lead">Long tool-heavy turns, diagrams, screenshots, and big outputs, all rendered to read cleanly. Here is a real deploy session.</p>
+      <p class="eyebrow">Try these</p>
+      <h2>Get a feel for it in five minutes.</h2>
+      <p class="lead">Give Claude one of these prompts and see exactly what Mirror renders. Use the arrows, the dots, or swipe to move through the examples.</p>
       <div class="carousel">
-        <div class="track" id="mtrack" tabindex="0" role="group" aria-roledescription="carousel" aria-label="Feature examples">
+        <div class="track" id="mtrack" tabindex="0" role="group" aria-roledescription="carousel" aria-label="Examples">
           <figure class="slide">
+            <div class="ask"><span class="ask-tag">Prompt</span><span class="ask-text">Draw a mermaid diagram of how a request flows through this app.</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></div>
             <div class="frame"><div class="chrome"><i></i><i></i><i></i><span class="addr">localhost:7842 &middot; diagram</span></div><div class="shot"><img src="feat-mermaid.png" alt="A mermaid flowchart rendered from a fenced code block, with a Source toggle in the corner."></div></div>
-            <figcaption class="cap"><b>Mermaid diagrams.</b> Fenced <code class="inline">mermaid</code> blocks render as real diagrams. Flip any one to its source, or toggle diagrams on and off from the top bar.</figcaption>
+            <figcaption class="cap"><b>You get a real diagram.</b> Flip any one to its source, or toggle diagrams on and off from the top bar.</figcaption>
           </figure>
           <figure class="slide">
+            <div class="ask"><span class="ask-tag">Prompt</span><span class="ask-text">Read every file in src/ and tell me what each one does.</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></div>
             <div class="frame"><div class="chrome"><i></i><i></i><i></i><span class="addr">localhost:7842 &middot; tools</span></div><div class="shot"><img src="feat-tools.png" alt="Four tool calls collapsed into one group with a count header and an expand-all control."></div></div>
-            <figcaption class="cap"><b>Grouped tool calls.</b> A turn that fires many tools collapses into one group with a count and an expand-all control, so a busy turn stays readable.</figcaption>
+            <figcaption class="cap"><b>The tool calls collapse into one group</b> with a count and an expand-all control, so a busy turn stays readable.</figcaption>
           </figure>
           <figure class="slide">
+            <div class="ask"><span class="ask-tag">Prompt</span><span class="ask-text">What looks wrong in this screenshot?</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></div>
             <div class="frame"><div class="chrome"><i></i><i></i><i></i><span class="addr">localhost:7842 &middot; images</span></div><div class="shot"><img src="feat-image.png" alt="A pasted dashboard image rendered inline beneath a user message."></div></div>
-            <figcaption class="cap"><b>Inline images.</b> Pasted images and screenshot tool results render in place, not as a wall of base64.</figcaption>
+            <figcaption class="cap"><b>Your image renders inline,</b> and so do screenshots your tools take, instead of a wall of base64.</figcaption>
           </figure>
           <figure class="slide">
+            <div class="ask"><span class="ask-tag">Prompt</span><span class="ask-text">Print package.json in full and explain each dependency.</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></div>
             <div class="frame"><div class="chrome"><i></i><i></i><i></i><span class="addr">localhost:7842 &middot; output</span></div><div class="shot"><img src="feat-code.png" alt="A long YAML block folded behind a Show more control, with a Copy button."></div></div>
-            <figcaption class="cap"><b>Copy and show-more.</b> Every code block has a copy button, and long output folds behind a "Show more" so the page stays scannable.</figcaption>
+            <figcaption class="cap"><b>Long output folds behind "Show more,"</b> and every code block gets a copy button on hover.</figcaption>
           </figure>
           <figure class="slide">
+            <div class="ask"><span class="ask-tag">In Mirror</span><span class="ask-text">Search: rollback</span></div>
             <div class="frame"><div class="chrome"><i></i><i></i><i></i><span class="addr">localhost:7842 &middot; search</span></div><div class="shot"><img src="search.png" alt="Searching across all sessions in Mirror, with matches highlighted in the results."></div></div>
-            <figcaption class="cap"><b>Search everything.</b> Full-text search across every session, with matches highlighted and a click to jump straight to them.</figcaption>
+            <figcaption class="cap"><b>Find anything across every session,</b> with matches highlighted and a click to jump straight to them.</figcaption>
           </figure>
         </div>
         <button class="cbtn prev" id="mprev" type="button" aria-label="Previous example">&#8249;</button>
         <button class="cbtn next" id="mnext" type="button" aria-label="Next example">&#8250;</button>
         <div class="dots" id="mdots" role="tablist" aria-label="Choose example"></div>
       </div>
-    </section>
-
-    <section id="try">
-      <p class="eyebrow">Try these</p>
-      <h2>Get a feel for it in five minutes.</h2>
-      <p class="lead">Open a session and give Claude one of these. Then watch it render in Mirror.</p>
-      <div class="recipes">
-        <div class="recipe">
-          <h3>Render a diagram</h3>
-          <pre class="prompt"><span class="ptext">Draw a mermaid diagram of how a request flows through this app.</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></pre>
-          <p class="out">Renders as a real diagram. Hit Source on it, or toggle Diagrams in the top bar.</p>
-        </div>
-        <div class="recipe">
-          <h3>Keep a busy turn readable</h3>
-          <pre class="prompt"><span class="ptext">Read every file in src/ and tell me what each one does.</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></pre>
-          <p class="out">The many tool calls collapse into one group you can expand.</p>
-        </div>
-        <div class="recipe">
-          <h3>Drop in a screenshot</h3>
-          <pre class="prompt"><span class="ptext">What looks wrong in this screenshot?</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></pre>
-          <p class="out">Paste or attach an image. It renders inline, and so do screenshots your tools take.</p>
-        </div>
-        <div class="recipe">
-          <h3>Fold a long output</h3>
-          <pre class="prompt"><span class="ptext">Print package.json in full and explain each dependency.</span><button class="copy" type="button" aria-label="Copy prompt">Copy</button></pre>
-          <p class="out">Long output folds behind Show more, with a Copy button on the block.</p>
-        </div>
-      </div>
-      <div class="callout" style="margin-top: 22px;">
-        <p>And in the browser: <b>search</b> the box to find anything across every session, click <b>Diagrams</b> in the top bar to toggle rendering, hide <b>thinking</b> or <b>tool calls</b> from the filter menu, and run <code class="inline">/mirror</code> any time to reopen the link.</p>
+      <div class="callout" style="margin-top: 24px;">
+        <p>And from the top bar: toggle <b>Diagrams</b>, hide <b>thinking</b> or <b>tool calls</b> from the filter menu, copy a <b>Resume</b> command for any session, and run <code class="inline">/mirror</code> any time to reopen the link.</p>
       </div>
     </section>
 
@@ -345,9 +319,9 @@ claude</pre>
     })();
 
     (function () {
-      document.querySelectorAll(".recipe .prompt .copy").forEach(function (btn) {
+      document.querySelectorAll(".ask .copy").forEach(function (btn) {
         btn.addEventListener("click", function () {
-          var t = btn.parentElement.querySelector(".ptext");
+          var t = btn.parentElement.querySelector(".ask-text");
           var s = t ? t.textContent : "";
           try {
             navigator.clipboard.writeText(s).then(function () {
