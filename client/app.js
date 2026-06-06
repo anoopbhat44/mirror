@@ -664,7 +664,7 @@ function highlightInConversation(query) {
 // breakdown is derived client-side from the already-rendered items, so it costs
 // no extra server work and stays in sync with what you are looking at.
 function aggregateCurrentSession(items) {
-  let userTurns = 0, asstTurns = 0, thinking = 0;
+  let userTurns = 0, asstTurns = 0;
   const tools = {};
   (items || []).forEach((it) => {
     if (it.role === "user") {
@@ -672,8 +672,7 @@ function aggregateCurrentSession(items) {
     } else if (it.role === "assistant") {
       asstTurns++;
       (it.blocks || []).forEach((b) => {
-        if (b.type === "thinking") thinking++;
-        else if (b.type === "tool_use") {
+        if (b.type === "tool_use") {
           const name = b.name || "tool";
           tools[name] = (tools[name] || 0) + 1;
         }
@@ -682,7 +681,7 @@ function aggregateCurrentSession(items) {
   });
   const list = Object.keys(tools).map((k) => ({ name: k, count: tools[k] }))
     .sort((a, b) => b.count - a.count);
-  return { userTurns, asstTurns, thinking, tools: list,
+  return { userTurns, asstTurns, tools: list,
            toolTotal: list.reduce((n, t) => n + t.count, 0) };
 }
 
@@ -741,7 +740,6 @@ function renderStats(data) {
   nums2.appendChild(statNumber(agg.userTurns, "your turns"));
   nums2.appendChild(statNumber(agg.asstTurns, "replies"));
   nums2.appendChild(statNumber(agg.toolTotal, "tool calls"));
-  nums2.appendChild(statNumber(agg.thinking, "thinking"));
   cs.appendChild(nums2);
   if (agg.tools.length) {
     cs.appendChild(el("div", "stats-sub", "Tools used"));
