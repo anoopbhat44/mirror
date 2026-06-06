@@ -115,7 +115,16 @@
     .ask-text { flex: 1; min-width: 0; font: 13px var(--mono); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ask .copy { flex: none; font: 11px var(--mono); color: var(--faint); background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 6px; padding: 4px 9px; cursor: pointer; transition: color 0.15s ease; }
     .ask .copy:hover { color: var(--text); }
-    @media (prefers-reduced-motion: reduce) { .track { scroll-behavior: auto; } }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    a:focus-visible { outline-offset: 3px; border-radius: 3px; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .track { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
     @media (max-width: 640px) { .feat { grid-template-columns: 1fr; } .cbtn { display: none; } .ask-text { white-space: normal; } }
   </style>
 </head>
